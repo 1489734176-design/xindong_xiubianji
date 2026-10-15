@@ -120,7 +120,10 @@ void Get_ADC_Result()
 	mc_core_list.Board_ADC_DATA.u16BemfV 			= (uint16_t)GET_ADC_VALUE(BEMF_V_CHANNEL);
 	mc_core_list.Board_ADC_DATA.u16BemfW 			= (uint16_t)GET_ADC_VALUE(BEMF_W_CHANNEL);
 	mc_core_list.Board_ADC_DATA.u16I_Peak 			= (uint16_t)GET_ADC_VALUE(OP_O_CHANNEL);
-	mc_core_list.Board_ADC_DATA.u16VR 				= (uint16_t)GET_ADC_VALUE(VR_CHANNEL);
+	/* PA3/VSP 只用于调速，PA1/ONOFF_AD 只用于机械开关及防飞车检测。 */
+	mc_core_list.Board_ADC_DATA.u16VR = (uint16_t)GET_ADC_VALUE(VR_CHANNEL);
+	user_list.vsp_adc = mc_core_list.Board_ADC_DATA.u16VR; // 保留旧档位ADC计算的输入字段
+	user_list.onoff_adc = (uint16_t)GET_ADC_VALUE(ONOFF_CHANNEL);
 	
 	mc_core_list.Board_ADC_DATA.u16I_SUM_Avg 		= (uint16_t)GET_ADC_VALUE(ISUMAVG_CHANNEL);
 	mc_core_list.Board_ADC_DATA.u16Vbus	 			= (uint16_t)GET_ADC_VALUE(VBUS_CHANNEL);

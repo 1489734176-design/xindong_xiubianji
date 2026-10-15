@@ -99,15 +99,21 @@ void user_para_init(void)
 {
 	user_list.userErr.word=0;
 	user_list.user_state=TOOL_STOP;
+	user_list.flag.word=0;
+	user_list.sleep_cnt=0;
+	user_list.gears_level=0;
+	user_list.speed_ref_erpm=ROUTER_MAX_SPEED_ERPM;
+	user_list.Vcc_cal_gain=32768u;
+	/* machine_error_hold 保留上电防飞车检测结果，不在此清零。 */
 #if DIR_DETECT_EN
 		user_list.flag.bits.gToolDir= Tool_Dir_Init;
 	/* 上电默认需扣动电位器才能启动，避免开机即握持扳机自动运转 */
 	user_list.dir_valid=0;
 	user_list.dir_retrig_need=1;
 #else
-	/* 无方向检测：固定 CW 正转，方向恒就绪 */
-	user_list.flag.bits.gToolDir = Tool_Dir_CW_Value;
-	mc_core_list.mc_dir          = Tool_Dir_CW_Value;
+	/* V366 无方向开关，继承旧 main 的实际换相方向。 */
+	user_list.flag.bits.gToolDir = Tool_Dir_Init;
+	mc_core_list.mc_dir          = Tool_Dir_Init;
 	user_list.dir_valid          = 1;
 	user_list.direction_ready    = 1;
 	user_list.dir_retrig_need    = 0;
@@ -1184,13 +1190,13 @@ void User_Temperature_Handler_Fast(void)
 				u32 T_mos_temp=0;
 				T_mos_temp=((user_list.Vcc_cal_gain*mc_core_list.Board_ADC_DATA.u16NTC_MOS))>>15;
 	
-				 if(T_mos_temp> RSM_MOS_TEMP_OVER_THD_ADC)//        
+				 if(T_mos_temp> RSM_MOS_TEMP_OVER_THD_ADC)//
 				{
 
 						user_list.userErr.bits.gNtcMos=0;
 				}
 				 if(
-				((mc_core_list.Board_ADC_DATA.u16NTC_MOS < MOS_TEMP_OVER_THD_ADC))
+				(T_mos_temp < MOS_TEMP_OVER_THD_ADC) /* 上电快检同样使用 VCC 校准后的 TMOS。 */
 				 )//按键复用
 				 {
 				 
@@ -1317,58 +1323,57 @@ void User_Temperature_Handler(void)
 
 #endif
 /**
- * @brief  上电飞钻检测
- *        上电时采集扳机电压ADC，若低于阈值判定为扳机处于按下状态（飞钻）
- *        触发fly_machine错误标志，防止上电时电机意外启动
+ * @brief 上电早期防飞车检测，仅在 EN 保持置高和电机初始化之前调用。
+ *        继承旧电路的原始 ADC 阈值：丢弃两次转换，再平均八次。
+ *        检测结果写入 hold，用户参数初始化不能将它清掉。
  */
-/*
 void power_on_fly_machine_handle(void)
 {
-		u8 i=0;
-		u32 fly_machine_adc_sum=0;
-		u32 fly_machine_adc=0;
-		ADC_Cmd(ADC1, DISABLE);
-		ADC_ITConfig(ADC1, ADC_IT_EOC, DISABLE);		// �ر�ADCת���ж�
-		TIM_ITConfig(TIM1, TIM_IT_Update, DISABLE);	// �ر�TIM1�����ж�
-		
-    ADC_AnyChannelNumCfg(ADC1, 0);
-    ADC_AnyChannelSelect(ADC1, 0, FLY_CHANNEL);	
-    ADC_AnyChannelCmd(ADC1, ENABLE);
-	
-	
-	
-		ADC_ExternalTrigConvCmd(ADC1, DISABLE);			// �ر�ADC�ⲿ����ת��
-		ADC_ClearFlag(ADC1, ADC_FLAG_EOC);					// ���ADCת����־λ
-	  ADC_SampleTimeConfig(ADC1,0, ADC_SampleTime_240_5);
-		ADC_Cmd(ADC1, ENABLE);
-		systick_delay_us(100);
-	
-		ADC_SoftwareStartConvCmd(ADC1, ENABLE);								// ��������ADCת��, ��ȡ��ֵ��������ֵ
-		while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == 0);		// �ȴ�ADCת�����
-		ADC_ClearFlag(ADC1, ADC_FLAG_EOC);										// ���ADCת����ɱ�־λ
-		ADC_SoftwareStartConvCmd(ADC1, ENABLE);								// ��������ADCת��, ��ȡ��ֵ��������ֵ
-		while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == 0);		// �ȴ�ADCת�����
-		ADC_ClearFlag(ADC1, ADC_FLAG_EOC);										// ���ADCת����ɱ�־λ
-		fly_machine_adc_sum=0;
-		for(i=0;i<8;i++)
+	u8 i;
+	u32 adc_sum=0;
+	u32 wait_count;
+
+	ADC_Cmd(ADC1, DISABLE);
+	ADC_ITConfig(ADC1, ADC_IT_EOC, DISABLE);
+	ADC_ITConfig(ADC1, ADC_IT_EOS, DISABLE);
+	ADC_ExternalTrigConvCmd(ADC1, DISABLE);
+	ADC_AnyChannelNumCfg(ADC1, 0);
+	ADC_AnyChannelSelect(ADC1, 0, ONOFF_CHANNEL);
+	ADC_AnyChannelCmd(ADC1, ENABLE);
+	ADC_SampleTimeConfig(ADC1, ONOFF_CHANNEL, ADC_SampleTime_240_5);
+	ADC_ClearFlag(ADC1, ADC_FLAG_EOC);
+	ADC_Cmd(ADC1, ENABLE);
+	systick_delay_us(100);
+
+	for(i=0;i<10;i++)
+	{
+		ADC_ClearFlag(ADC1, ADC_FLAG_EOC);
+		ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+		/* ADC 异常时也锁定启动，避免卡死或误判为允许启动。 */
+		wait_count=100000u;
+		while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC)==RESET && wait_count)
 		{
-			ADC_SoftwareStartConvCmd(ADC1, ENABLE);								// ��������ADCת��, ��ȡ��ֵ��������ֵ
-			while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == 0);		// �ȴ�ADCת�����
-			ADC_ClearFlag(ADC1, ADC_FLAG_EOC);										// ���ADCת����ɱ�־λ
-			fly_machine_adc_sum += (uint16_t)GET_ADC_VALUE(FLY_CHANNEL);
+			wait_count--;
 		}
-		fly_machine_adc=fly_machine_adc_sum>>3;
-		if(fly_machine_adc<983)  // 飞钻判定阈值（扳机电压低于此值视为扳机已按下）
+		if(wait_count==0)
 		{
 			machine_error_hold.userErr_hold.bits.fly_machine=1;
-		
+			break;
 		}
-		ADC_Cmd(ADC1, DISABLE);
-		systick_delay_us(100);
-		Board_ADC_Init();
+		if(i>=2)
+		{
+			adc_sum+=(uint16_t)GET_ADC_VALUE(ONOFF_CHANNEL);
+		}
+	}
+	if(i==10 && (adc_sum>>3)<POWER_ON_FLY_ADC)
+	{
+		machine_error_hold.userErr_hold.bits.fly_machine=1;
+	}
 
+	ADC_Cmd(ADC1, DISABLE);
+	systick_delay_us(100);
+	Board_ADC_Init(); // 恢复完整扫描及 TIM1_CC4 同步触发。
 }
-*/
 
 /**
  * @brief  方向检测处理
@@ -1378,9 +1383,9 @@ void power_on_fly_machine_handle(void)
 void user_direction_handle(void)
 {
 #if !DIR_DETECT_EN
-	/* 无方向检测：固定 CW 正转，方向恒就绪（PB8/PB9 归 LED1/COM4 预留） */
-	user_list.flag.bits.gToolDir = Tool_Dir_CW_Value;
-	mc_core_list.mc_dir          = Tool_Dir_CW_Value;
+	/* 无方向开关：保持旧 V366 工程的实际换相方向数值，不按宏注释猜方向。 */
+	user_list.flag.bits.gToolDir = Tool_Dir_Init;
+	mc_core_list.mc_dir          = Tool_Dir_Init;
 	user_list.dir_valid          = 1;
 	user_list.direction_ready    = 1;
 	user_list.dir_retrig_need    = 0;
@@ -1600,96 +1605,22 @@ u32 PI_p=0;
 u32	pwm_duty_aim_PI_OUT=0;
 /**
  * @brief  目标PWM占空比计算
- *        TRG_DIGITAL_EN=1：直接赋值MAX_TOOL_DUTY，不使用扳机ADC值
- *        TRG_DIGITAL_EN=0：扳机ADC线性映射，并限幅至MIN_TOOL_DUTY～MAX_TOOL_DUTY
+ *        PA3/VSP 独立电位器映射到 20%~100%，PA1 开关独立控制运行许可。
  */
 void pwm_duty_aim_deal(void)
 {
-	
-	#if(TRG_DIGITAL_EN)
-		motor_control_list.pwm_duty_aim_per = MAX_TOOL_DUTY;
-	#else
-		/* 电位器连续调速：扳机电压线性映射为目标占空比 */
-		if(mc_core_list.Board_ADC_DATA.u16VR < MIN_TRG_ADC)
-		{
-			motor_control_list.pwm_duty_aim_per = MIN_TOOL_DUTY;
-		}
-		else if(mc_core_list.Board_ADC_DATA.u16VR >= MAX_TRG_ADC)
-		{
-			motor_control_list.pwm_duty_aim_per = MAX_TOOL_DUTY;
-		}
-		else
-		{
-			motor_control_list.pwm_duty_aim_per = (uint16_t)((float)(mc_core_list.Board_ADC_DATA.u16VR - MIN_TRG_ADC)*K_ADC_DUTY + MIN_TOOL_DUTY);
-		}
-	#endif
-	#if(0)
-	
-		
-		#if 0
-	if(motor_run_count<50)
-	
+	/* 完全沿用旧VSP计算：浮点运算后一次转uint16_t，不改为整数插值，
+	 * 不增加ADC上限钳位；硬件PWM仍由pwm_set的原周期上下限约束。
+	 */
+	if(user_list.vsp_adc<MIN_TRG_ADC)
 	{
-		pwm_duty_aim_PI_OUT=0;
-	
+		user_list.vsp_adc=MIN_TRG_ADC;
 	}
-	else 
-	{
-		if(mc_core_list.time_count_60_degree>((u32)(1500*MOTOR_TIMR_FRQ_MHZ)))
-		{
-			PI_p=mc_core_list.time_count_60_degree-((u32)(1500*MOTOR_TIMR_FRQ_MHZ));
-			PI_p=(PI_p>>2);
-			if(PI_sum_i<PWM_PRIOD_LOAD)
-			{
-				PI_sum_i++;
-				
-			}
-			pwm_duty_aim_PI_OUT=PI_sum_i+PI_p;
-		}
-		
-		else 
-		{
-			PI_p=((u32)(1500*MOTOR_TIMR_FRQ_MHZ))-mc_core_list.time_count_60_degree;
-			PI_p=(PI_p>>2);
-			if(PI_sum_i>LIMIT_MIN_PWN_DUTY)
-			{
-				PI_sum_i--;
-			}
-			if(PI_sum_i>PI_p)
-			{
-				pwm_duty_aim_PI_OUT=PI_sum_i-PI_p;
-			}
-			else 
-			{
-				pwm_duty_aim_PI_OUT=LIMIT_MIN_PWN_DUTY;
-			
-			}
-		}
-		
+	motor_control_list.pwm_duty_aim_per=(uint16_t)((float)(user_list.vsp_adc - MIN_TRG_ADC)*K_ADC_DUTY+ MIN_TOOL_DUTY);
+	motor_control_list.pwm_duty_aim=motor_control_list.pwm_duty_aim_per;
+	user_list.speed_ref_erpm=ROUTER_MAX_SPEED_ERPM;
+}
 
-	}
-	
-		if(pwm_duty_aim_PI_OUT>LIMIT_MAX_PWN_DUTY)
-		{
-			pwm_duty_aim_PI_OUT=LIMIT_MAX_PWN_DUTY;
-		
-		}
-			if(pwm_duty_aim_PI_OUT>motor_control_list.pwm_duty_aim_per)
-		{
-			motor_control_list.pwm_duty_aim=pwm_duty_aim_PI_OUT;
-		}
-		else 
-		{
-		
-			motor_control_list.pwm_duty_aim=motor_control_list.pwm_duty_aim_per;
-		}
-		#else
-//		motor_control_list.pwm_duty_aim_per=(u16)((PWM_PRIOD_LOAD)*1.0f);
-		motor_control_list.pwm_duty_aim=motor_control_list.pwm_duty_aim_per;
-		#endif
-	#endif
-
-}	
 uint8_t pulse_mode=0;
 uint16_t pulse_max_duty=0;
 /**
@@ -1715,100 +1646,79 @@ void pulse_th_handle(void)
 
 
 }
-/**
- * @brief  齿轮/挡位处理
- *        根据当前挡位对目标占空比进行比例缩放
- *        挡位0: PWM_DUTY_GEARS1(50%) 挡位1: PWM_DUTY_GEARS2(80%) 挡位2+: PWM_DUTY_GEARS3(100%)
- */
+/* 档位ADC电压、换算及滞回公式完全保留旧工程，不改为硬编码数组。 */
+#define VREF 5.0f
+#define ADC_RESOLUTION 4095
+#define HYSTERESIS_V 0.1f
+#define HYSTERESIS_V2 0.08f
+#define VOLTAGE_TO_ADC(v) ((unsigned int)((v) * ADC_RESOLUTION / VREF))
+#define GEAR1_VOLTAGE 0.05f
+#define GEAR2_VOLTAGE 0.6f
+#define GEAR3_VOLTAGE 1.76f
+#define GEAR4_VOLTAGE 3.50f
+#define GEAR5_VOLTAGE 4.6f
+#define GEAR6_VOLTAGE 4.95f
+#define THRESHOLD_V_GEAR1 ((GEAR1_VOLTAGE + GEAR2_VOLTAGE) / 2.0f)
+#define THRESHOLD_V_GEAR2 ((GEAR2_VOLTAGE + GEAR3_VOLTAGE) / 2.0f)
+#define THRESHOLD_V_GEAR3 ((GEAR3_VOLTAGE + GEAR4_VOLTAGE) / 2.0f)
+#define THRESHOLD_V_GEAR4 ((GEAR4_VOLTAGE + GEAR5_VOLTAGE) / 2.0f)
+#define THRESHOLD_V_GEAR5 ((GEAR5_VOLTAGE + GEAR6_VOLTAGE) / 2.0f)
+#define THRESHOLD_ADC_GEAR1 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR1)
+#define THRESHOLD_ADC_GEAR2 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR2)
+#define THRESHOLD_ADC_GEAR3 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR3)
+#define THRESHOLD_ADC_GEAR4 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR4)
+#define THRESHOLD_ADC_GEAR5 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR5)
+#define HYSTERESIS_ADC VOLTAGE_TO_ADC(HYSTERESIS_V)
+#define HYSTERESIS_ADC2 VOLTAGE_TO_ADC(HYSTERESIS_V2)
+
+void get_gear_from_adc(unsigned int adc_value)
+{
+	switch(user_list.gears_level)
+	{
+		case 0:
+			if(adc_value > THRESHOLD_ADC_GEAR1 + HYSTERESIS_ADC)
+				user_list.gears_level = 1;
+			break;
+		case 1:
+			if(adc_value > THRESHOLD_ADC_GEAR2 + HYSTERESIS_ADC)
+				user_list.gears_level = 2;
+			else if(adc_value < THRESHOLD_ADC_GEAR1 - HYSTERESIS_ADC)
+				user_list.gears_level = 0;
+			break;
+		case 2:
+			if(adc_value > THRESHOLD_ADC_GEAR3 + HYSTERESIS_ADC)
+				user_list.gears_level = 3;
+			else if(adc_value < THRESHOLD_ADC_GEAR2 - HYSTERESIS_ADC)
+				user_list.gears_level = 1;
+			break;
+		case 3:
+			if(adc_value > THRESHOLD_ADC_GEAR4 + HYSTERESIS_ADC)
+				user_list.gears_level = 4;
+			else if(adc_value < THRESHOLD_ADC_GEAR3 - HYSTERESIS_ADC)
+				user_list.gears_level = 2;
+			break;
+		case 4:
+			if(adc_value > THRESHOLD_ADC_GEAR5 + HYSTERESIS_ADC2)
+				user_list.gears_level = 5;
+			else if(adc_value < THRESHOLD_ADC_GEAR4 - HYSTERESIS_ADC)
+				user_list.gears_level = 3;
+			break;
+		case 5:
+			if(adc_value < THRESHOLD_ADC_GEAR5 - HYSTERESIS_ADC2)
+				user_list.gears_level = 4;
+			break;
+		default:
+			user_list.gears_level = 0;
+			break;
+	}
+}
+
 void user_gears_handle(void)
 {
-	
-	#if 0
-		u8 res=0;
-		static uint8_t pulse_dir=0;
-		static uint16_t pulse_cout=0;
-		pulse_th_handle();
-		res=key_scan();
-		if(user_list.user_state==TOOL_STOP)
-		{
-				if(res==1)
-				{
-					if(user_list.gears_level<1)
-					{
-						user_list.gears_level++;
-						
-					}
-					else
-					{
-						user_list.gears_level=0;
-					}
-					save_user_data();	
-			//		user_list.gears_level_changed=1;
-				}
-		}
-
-	if(user_list.gears_level==0)
-	{
-		if(pulse_mode)
-		{
-			motor_control_list.pwm_duty_aim_per=(motor_control_list.pwm_duty_aim_per*PWM_DUTY_GEARS1)>>15;
-		
-			if(pulse_dir==0)
-			{
-				
-				if(motor_control_list.pwm_duty_aim>LIMIT_MIN_PWN_DUTY)
-				{
-					motor_control_list.pwm_duty_aim-=4;
-				}
-				pulse_cout++;
-				if(pulse_cout>=250)
-				{
-					pulse_dir=1;
-				}
-			}
-			else 
-			{
-				if(motor_control_list.pwm_duty_aim<pulse_max_duty||motor_control_list.pwm_duty_aim<((u32)(PWM_PRIOD_LOAD*0.20)))
-				{
-					motor_control_list.pwm_duty_aim+=4;
-
-					
-				}
-				
-				if(pulse_cout) 
-				{
-					pulse_cout--;
-					
-				}
-				else 
-				{
-					pulse_max_duty+=((u32)(PWM_PRIOD_LOAD*0.02f));
-					if(pulse_max_duty>((u32)(PWM_PRIOD_LOAD*0.45f)))
-					{
-						
-						pulse_max_duty=((u32)(PWM_PRIOD_LOAD*0.45f));
-					}
-					pulse_dir=0;
-				}
-			
-			}
-		}
-		else 
-		{
-			motor_control_list.pwm_duty_aim=(motor_control_list.pwm_duty_aim_per*PWM_DUTY_GEARS1)>>15;
-		
-		}
-		
-	}
-	else 
-	{
-	
-		motor_control_list.pwm_duty_aim=(motor_control_list.pwm_duty_aim_per*PWM_DUTY_GEARS3)>>15;
-	}
-	#else 
+	get_gear_from_adc(mc_core_list.Board_ADC_DATA.u16VR);
 	motor_control_list.pwm_duty_aim=motor_control_list.pwm_duty_aim_per;
-	#endif
 }
+
 /**
  * @brief  电动扳手按键处理
  *        正转时切换挡位(0/1/2)，反转时切换自动停机功能
@@ -2105,88 +2015,48 @@ void user_WrenchKey_Handler(void)
 
 
 /**
- * @brief  电机开关控制
+ * @brief  V366 机械开关控制
  *        数字模式：PA1低电平松开、高电平按下；ADC模式：低于TRG_ON_ADC-100松开，达到TRG_ON_ADC按下
  *        对应计数超过20次后更新gToolTrigger标志（1ms任务调用）
  */
 void motor_on_off_control(void)
 {
-	static 	u8 gToolTrigger_off_count=0;
-	static 	u8 gToolTrigger_on_count=0;
-//		user_list.flag.bits.gToolTrigger=1;
-	#if(TRG_DIGITAL_EN)
-		/* SPEED 外部下拉，按键闭合接入高电平。 */
-		if(GPIO_ReadInputDataBit(VR_PORT, VR_PIN) == Bit_RESET)
-		{
-			gToolTrigger_off_count++;
-			gToolTrigger_on_count=0;
-			if(gToolTrigger_off_count>20)
-			{
-				user_list.flag.bits.gToolTrigger=0;
-			}
-		}
-		else
-		{
-			gToolTrigger_off_count=0;
-			gToolTrigger_on_count++;
-			if(gToolTrigger_on_count>20)
-			{
-				user_list.flag.bits.gToolTrigger=1;
-			}
-		}
-	#else
-		/* ADC 模式：VR 电压与阈值比较 */
-		if(mc_core_list.Board_ADC_DATA.u16VR < (TRG_ON_ADC - 100))
-		{
-			gToolTrigger_off_count++;
-			gToolTrigger_on_count=0;
-			if(gToolTrigger_off_count>20)
-			{
-				user_list.flag.bits.gToolTrigger=0;
-			}
-		}
-		if(mc_core_list.Board_ADC_DATA.u16VR >= TRG_ON_ADC)
-		{
-			gToolTrigger_off_count=0;
-			gToolTrigger_on_count++;
-			if(gToolTrigger_on_count>20)
-			{
-				user_list.flag.bits.gToolTrigger=1;
-			}
-		}
-	#endif
-	
-	
-	#if 0
-		if(GPIO_ReadInputDataBit(DIR_PORT,DIR_PIN)==1) 
+	static u8 on_count=0;
+	static u8 off_count=0;
+
+	/* 只看 PA1：继承旧 237/257 原始 ADC 滞回与 11 次确认。
+	 * 饱和计数避免长时间保持开关后 u8 溢出；死区内保持原状态。
+	 */
+	if(user_list.onoff_adc>ONOFF_ON_ADC)
 	{
-		gToolTrigger_off_count++;
-		gToolTrigger_on_count=0;
-		if(gToolTrigger_off_count>10)
+		off_count=0;
+		if(on_count<ONOFF_FILTER_MS)
+		{
+			on_count++;
+		}
+		if(on_count>=ONOFF_FILTER_MS)
+		{
+			user_list.flag.bits.gToolTrigger=1;
+		}
+	}
+	else if(user_list.onoff_adc<ONOFF_OFF_ADC)
+	{
+		on_count=0;
+		if(off_count<ONOFF_FILTER_MS)
+		{
+			off_count++;
+		}
+		if(off_count>=ONOFF_FILTER_MS)
 		{
 			user_list.flag.bits.gToolTrigger=0;
 		}
-	
 	}
-	if(GPIO_ReadInputDataBit(DIR_PORT,DIR_PIN)==0) 
-	{
-				gToolTrigger_off_count=0;
-	   	gToolTrigger_on_count++;
-			if(gToolTrigger_on_count>10)
-			{
-			user_list.flag.bits.gToolTrigger=1;
-			}
-	}
-	
-	#endif
-
 }
 
 /**
- * @brief  故障锁存更新
- *        将当前MC错误和用户错误锁存到machine_error_hold中
- *        锁存后需手动清除才能恢复
+ * @brief 实时故障 OR 锁存，开关释放且电机停止、保护恢复后才允许清除。
  */
+
 void error_hold_updata(void)
 {
 	machine_error_hold.MC_error_hold.word|=mc_core_list.MC_error.word;
@@ -2202,11 +2072,12 @@ void error_hold_updata(void)
  */
 void user_state_control(void)
 {
-	/* 电池通信许可撤销时立即清工具使能，运行中则回到停止态 */
+	u8 block_error;
+
 	if(!Bat_Com_CanRun())
 	{
 		user_list.flag.bits.gToolEn=0;
-		if(user_list.user_state == TOOL_RUN)
+		if(user_list.user_state==TOOL_RUN)
 		{
 			user_list.user_state=TOOL_STOP;
 		}
@@ -2216,148 +2087,120 @@ void user_state_control(void)
 		case TOOL_STOP:
 			user_list.flag.bits.gToolEn=0;
 			user_list.Load_exist=0;
-#if LED_EN
-			if(++user_list.sleep_cnt>SLEEP_TIME && light_ctrl.state==LIGHT_OFF)  // 休眠超时，进入低功耗
-#else
-			if(++user_list.sleep_cnt>SLEEP_TIME)  // 休眠超时，进入低功耗（无 LED，不依赖照明状态）
-#endif
-			{
-#if BAT_COM_EN
-				/* 休眠前先停用通信释放总线，随后 break 防止后续逻辑覆盖 POWER_DOWN */
-				Bat_Com_Sleep();
-#endif
-				user_list.user_state=TOOL_POWER_DOWN;
-				user_list.sleep_cnt=0;
-				break;
-			}
-//			if(!user_list.key_adc)
-//			{
-//				user_list.sleep_cnt=0;
-//			}
-			if(machine_error_hold.MC_error_hold.word!=0||machine_error_hold.userErr_hold.word!=0)
+			if(machine_error_hold.MC_error_hold.word || machine_error_hold.userErr_hold.word ||
+			   mc_core_list.MC_error.word || user_list.userErr.word)
 			{
 				user_list.user_state=TOOL_ERROR_STOP;
-			}
-			else if(user_list.flag.bits.gAutoStop == 1)
-			{
-				if(user_list.flag.bits.gToolTrigger==0)
-				{
-					user_list.flag.bits.gAutoStop =0;
-				}
-			}
-			else if(user_list.flag.bits.gToolTrigger && user_list.direction_ready && Bat_Com_CanRun())
-			{
-				user_list.flag.bits.gToolEn=1;
-				user_list.user_state=TOOL_RUN;
-				user_list.sleep_cnt=0;
-			}
-		break;
-			
-		case TOOL_ERROR_STOP:
-			user_list.flag.bits.gToolEn=0;
-//			user_list.Load_exist=0;
-#if LED_EN
-			if(++user_list.sleep_cnt>SLEEP_TIME && light_ctrl.state==LIGHT_OFF)
-#else
-			if(++user_list.sleep_cnt>SLEEP_TIME)
-#endif
-			{
-#if BAT_COM_EN
-				/* 报错停机下同样先停用通信再进入休眠，break 保护 POWER_DOWN 不被覆盖 */
-				Bat_Com_Sleep();
-#endif
-				user_list.user_state=TOOL_POWER_DOWN;
-				user_list.sleep_cnt=0;
 				break;
 			}
-//			if(!user_list.key_adc)
-//			{
-//				user_list.sleep_cnt=0;
-//			}
-			if(user_list.flag.bits.gToolTrigger==0)
+			if(user_list.flag.bits.gToolTrigger)
 			{
-				if(user_list.userErr.word==0)
+				user_list.sleep_cnt=0;
+				if(!user_list.flag.bits.gAutoStop && user_list.direction_ready &&
+				   motor_control_list.bldc_state==MOTOR_STOP && Bat_Com_CanRun())
 				{
-					if(	machine_error_hold.userErr_hold.bits.gIBusAcmpOCP==1&&motor_control_list.bldc_state==MOTOR_STOP)
-					{
-						machine_error_hold.userErr_hold.bits.gIBusAcmpOCP=0;
-						TIM_CtrlPWMOutputs(TIM1, ENABLE);
-					}
-					#if 0
-					mc_core_list.MC_error.word=0;
-					machine_error_hold.MC_error_hold.word=0;
-					#else
-					mc_core_list.MC_error.word&=(0x00000004);//��ת������ֱ����
-					machine_error_hold.MC_error_hold.word&=(0x00000004);	
-					if(mc_core_list.MC_error.bits.gBlock==0) //mc_core_list.MC_error.bits.gBlockΪ0�����
-					{
-						machine_error_hold.MC_error_hold.bits.gBlock=0;
-					}
-					#endif
-					machine_error_hold.userErr_hold.word&=0x00000001;
+					user_list.flag.bits.gToolEn=1;
+					user_list.user_state=TOOL_RUN;
 				}
-				if(	machine_error_hold.MC_error_hold.word==0&&machine_error_hold.userErr_hold.word==0)
-				{
-					user_list.user_state=TOOL_STOP;
-				}
-//				user_list.userErr.word=0;
 			}
 			else
 			{
-				user_list.sleep_cnt=0;
+				user_list.flag.bits.gAutoStop=0;
+				if(++user_list.sleep_cnt>SLEEP_TIME && motor_control_list.bldc_state==MOTOR_STOP)
+				{
+#if BAT_COM_EN
+					Bat_Com_Sleep();
+#endif
+					user_list.user_state=TOOL_POWER_DOWN;
+					user_list.sleep_cnt=0;
+				}
 			}
-		break;
-			
-		case TOOL_RUN:
-			#if(RESTAR_EN)
-			if(machine_error_hold.userErr_hold.word!=0||((machine_error_hold.MC_error_hold.word&0xfffb) != 0)||\
-			(machine_error_hold.MC_error_hold.bits.gBlock&&(user_list.Load_exist>=RESTAR_COUNT)))
-			#else
-			if(machine_error_hold.userErr_hold.word!=0||((machine_error_hold.MC_error_hold.word) != 0))
-			#endif
+			break;
+
+		case TOOL_ERROR_STOP:
+			user_list.flag.bits.gToolEn=0;
+			if(user_list.flag.bits.gToolTrigger)
 			{
+				/* 机械开关未释放时不解除防飞车或故障锁存，不自动重启。 */
+				user_list.sleep_cnt=0;
+				break;
+			}
+			if(++user_list.sleep_cnt>SLEEP_TIME && motor_control_list.bldc_state==MOTOR_STOP)
+			{
+#if BAT_COM_EN
+				Bat_Com_Sleep();
+#endif
+				user_list.user_state=TOOL_POWER_DOWN;
+				user_list.sleep_cnt=0;
+				break;
+			}
+			if(user_list.userErr.word==0 && motor_control_list.bldc_state==MOTOR_STOP)
+			{
+				/* 硬件过流锁存只能在电机完全停止后恢复 PWM 输出。 */
+				if(machine_error_hold.userErr_hold.bits.gIBusAcmpOCP)
+				{
+					machine_error_hold.userErr_hold.bits.gIBusAcmpOCP=0;
+					TIM_CtrlPWMOutputs(TIM1, ENABLE);
+				}
+				/* 堵转恢复由电机层定时器决定，不照搬旧结构的 0x4 位掩码。 */
+				block_error=mc_core_list.MC_error.bits.gBlock;
+				mc_core_list.MC_error.word=0;
+				mc_core_list.MC_error.bits.gBlock=block_error;
+				machine_error_hold.MC_error_hold.word=0;
+				machine_error_hold.MC_error_hold.bits.gBlock=block_error;
+				machine_error_hold.userErr_hold.word=0;
+				if(machine_error_hold.MC_error_hold.word==0)
+				{
+					user_list.user_state=TOOL_STOP;
+				}
+			}
+			break;
+
+		case TOOL_RUN:
+			user_list.sleep_cnt=0;
+			if(machine_error_hold.userErr_hold.word || machine_error_hold.MC_error_hold.word ||
+			   user_list.userErr.word || mc_core_list.MC_error.word)
+			{
+				user_list.flag.bits.gToolEn=0;
 				user_list.user_state=TOOL_ERROR_STOP;
 			}
-			if(user_list.flag.bits.gToolTrigger==0)
-			{
-				user_list.user_state=TOOL_STOP;
-			}
-			/* 运行中方向变为无效（两引脚同时生效或同时不生效）立即停机 */
-			if(!user_list.dir_valid)
+			else if(!user_list.flag.bits.gToolTrigger || !user_list.dir_valid ||
+			        user_list.flag.bits.gAutoStop || !Bat_Com_CanRun())
 			{
 				user_list.flag.bits.gToolEn=0;
 				user_list.user_state=TOOL_STOP;
 			}
-
-			if(user_list.flag.bits.gAutoStop == 1)
+			else
 			{
-				user_list.flag.bits.gToolEn = 0;   /**/
-//				user_list.ToolState_Cnt = 0;
-				user_list.user_state = TOOL_STOP;    
+				user_list.flag.bits.gToolEn=1;
 			}
-		break;
-		
+			break;
+
 		case TOOL_POWER_DOWN:
+			/* EN 是驱动电源保持，不是换相使能；只在停机后释放。 */
+			user_list.flag.bits.gToolEn=0;
 			user_list.sleep_cnt=0;
-			GPIO_ResetBits(EN_PORT, EN_PIN);  // 关闭电源使能（进入低功耗）
+			GPIO_ResetBits(EN_PORT, EN_PIN);
 			if(user_list.flag.bits.gToolTrigger)
 			{
-				if(machine_error_hold.MC_error_hold.word!=0||machine_error_hold.userErr_hold.word!=0)
+				GPIO_SetBits(EN_PORT, EN_PIN);
+#if BAT_COM_EN
+				Bat_Com_Restart();
+#endif
+				if(machine_error_hold.MC_error_hold.word || machine_error_hold.userErr_hold.word)
 				{
-					user_list.user_state = TOOL_ERROR_STOP;
+					user_list.user_state=TOOL_ERROR_STOP;
 				}
 				else
 				{
-					user_list.user_state = TOOL_STOP;
+					user_list.user_state=TOOL_STOP;
 				}
-				GPIO_SetBits(EN_PORT, EN_PIN);  // 重新使能电源
-#if BAT_COM_EN
-				Bat_Com_Restart();             // 唤醒后重启通信，重新握手前电机不得运行
-#endif
 			}
-		break;
-			
+			break;
+
 		default:
-		break;
+			user_list.flag.bits.gToolEn=0;
+			user_list.user_state=TOOL_STOP;
+			break;
 	}
 }

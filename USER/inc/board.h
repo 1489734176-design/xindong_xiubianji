@@ -56,12 +56,15 @@
 #define ISUMAVG_CHANNEL        			ADC_Channel_4  	
 #define ISUMAVG_RANK             		(4)
 
-#define VR_CHANNEL                  ADC_Channel_0   // 扳机电压/调速信号	
-#define VR_RANK                     (5)
-#define VBUS_CHANNEL                ADC_Channel_1   // 母线电压	
+#define ONOFF_CHANNEL               ADC_Channel_0   // PA1：开关/防飞车模拟检测
+#define ONOFF_RANK                  (5)
+#define VBUS_CHANNEL                ADC_Channel_1   // 母线电压
 #define VBUS_RANK                   (6)
-#define DIR_CHANNEL                ADC_Channel_2   // 方向检测	
-#define DIR_RANK                   (7)
+#define VR_CHANNEL                  ADC_Channel_2   // PA3：VSP 调速电位器
+#define VR_RANK                     (7)
+/* 旧方向 ADC 路径的兼容名称；该通道现由 VSP 使用，不作为换向输入。 */
+#define DIR_CHANNEL                 VR_CHANNEL
+#define DIR_RANK                    VR_RANK
 
 #define T_MOS_CHANNEL                ADC_Channel_3   // MOS温度NTC	
 #define T_MOS_RANK                   (8)
@@ -78,8 +81,11 @@
 #define ADC_TRIG_O_PIN_SRC        	GPIO_PinSource12
 #define ADC_TRIG_O_PIN_AF         	GPIO_AF_6
 
+#define ONOFF_PORT                  GPIOA
+#define ONOFF_PIN                   GPIO_Pin_1
+
 #define VR_PORT                     GPIOA
-#define VR_PIN                      GPIO_Pin_1
+#define VR_PIN                      GPIO_Pin_3
 
 #define VBUS_PORT                   GPIOA
 #define VBUS_PIN                    GPIO_Pin_2
@@ -93,9 +99,9 @@
 
 #define EN_PIN_RCC_CLOCKGPIO          (RCC_AHBENR_GPIOA_Msk)
 #define EN_PORT                      GPIOA
-/* NX32F002TS 方板：电源保持 EN 接 PA11（原 PA13 归还 SWDIO 调试） */
-#define EN_PIN                       GPIO_Pin_11
-#define EN_PIN_SRC                   GPIO_PinSource11
+/* V366 修边机：PA13 为电源保持 EN，解除 SWDIO 复用后作为 GPIO 输出。 */
+#define EN_PIN                       GPIO_Pin_13
+#define EN_PIN_SRC                   GPIO_PinSource13
 #define EN_PIN_AF                    GPIO_AF_1
 
 
@@ -406,7 +412,8 @@ extern void Bsp_Gpio_Init(void);
 extern void Peripheral_Init(void);
 void Board_ADC_Init(void);
 void Bsp_Adc_Init(void);
-void En_Port_init(void);
+void W_port_init(void);                       /* 旧入口兼容：PA1 ONOFF_AD 模拟输入 */
+void En_Port_init(void);                      /* PA13/AF1 电源保持输出 */
 void Bsp_Com_init(void);                       /* 通信端口(PA11/12/14)初始化 */
 void Bsp_Com_Tx_Mode(uint8_t uart_enable);     /* COM_TX 引脚 UART/GPIO 模式切换 */
 void Bsp_Usart_Init(void);                     /* USART1 初始化(4800 8N1) */

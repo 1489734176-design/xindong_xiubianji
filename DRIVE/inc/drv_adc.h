@@ -52,7 +52,9 @@ typedef struct ADC_Channel
 /** @brief 清除ADC转换结束标志位 */
 #define CLEAN_ADC_EOC_FLAG()     SET_BIT(ADC1->ADSTA, ADC_IT_EOC)
 
-/** @brief ADC顺序采样：获取指定通道的ADC转换值（12位，低12位有效） */
+/** @brief 按物理 ADC 通道号读取结果（低12位有效），参数不是扫描 rank。
+ *  ONOFF_CHANNEL 读取 PA1 开关检测，VR_CHANNEL 读取 PA3 调速电位器，二者独立。
+ */
 #define GET_ADC_VALUE(Channel)      (READ_REG(*(&(ADC1->ADDR0) + Channel)) & 0xFFF)
 
 extern void Drv_Adc_Basic_Init(ADC_TypeDef* pAdc, uint32_t ADC_ExternalTrigConv);

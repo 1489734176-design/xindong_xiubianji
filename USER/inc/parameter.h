@@ -62,20 +62,29 @@
 
 #define USER_ROTATE_ERROR_EN      (1)  //堵转反转保护---电机1默认打开
 
-#define LIMIT_SPEED_EN                 (1)  //限速
+#define LIMIT_SPEED_EN                 (1)  // 保留新框架速度 PI 限速
+/* get_speed() 的单位是电气 RPM；继承新框架上限，不将它当作机械 RPM。
+ * 机械转速换算还需电机极对数，不能由六档旋钮或原理图推断。 */
+#define ROUTER_MAX_SPEED_ERPM          (60000)
+#define ROUTER_SPEED_PI_PERIOD_MS      (5u)    // 小步更新，减少原11ms一跳的转矩阶跃
+#define ROUTER_SPEED_KP_Q15            (20)    // 约0.00061，降低换相测速抖动的比例放大
+#define ROUTER_SPEED_KI_Q15            (3)     // 约0.000092/5ms，积分慢于原参数
+#define ROUTER_SPEED_DEADBAND_ERPM     (120)   // 上限附近约0.2%误差不来回追调
+#define ROUTER_SPEED_PI_STEP_UP        (4)     // 每次PI最多增加4个CCR计数
+#define ROUTER_SPEED_PI_STEP_DOWN      (4)     // 正常限速每次最多减少4个CCR，保护不受此限制
+#define ROUTER_SPEED_REF_STEP_ERPM     (40u)   // 闭环参考每1ms最多升40eRPM，约1.5s到60000
 
 
 
 #define LED_SCAN_EN       (0)
 
 /*----------------------------------------------------------------------//
-// NX32F002TS 方板：功能裁剪开关
-//  DIR_DETECT_EN : 方向(正反转)检测。0=固定单方向(CW 正转)，PB8/PB9 归 LED1/COM4 预留
-//  LED_EN        : LED(照明/故障)显示。0=无 LED，LED+/COM 引脚预留、不初始化
-//  (电池通信 BAT_COM_EN 在 Bat_com.h 中；电池温度 EN_BAT_TEMP_DETECT 见下方温度段)
+// V366 六档修边机：单方向、机械开关、独立 VSP 调速及单路照明。
+// PA13 为 EN 电源保持，PA10 为照明；本板无方向开关和多灯扫描矩阵。
+// 电池通信及电池温度保持关闭，本板仅使用母线电压与 MOS NTC 保护。
 //----------------------------------------------------------------------*/
 #define DIR_DETECT_EN     (0)
-#define LED_EN            (0)
+#define LED_EN            (1)
 #define PWM_DUTY_GEARS1    (u32)(32768 * 0.5f)  
 #define PWM_DUTY_GEARS2    (u32)(32768 * 0.80f)    
 #define PWM_DUTY_GEARS3    (u32)(32768 * 1.0f) 
@@ -85,19 +94,25 @@
 
 
 //----------------------------------------------------------------------//
-// 扳机检测模式
-//  1 = 数字 IO 模式（PA1 高电平按下、低电平松开，目标占空比直接赋 MAX_TOOL_DUTY）
-//  0 = ADC 连续调速模式（PA1 模拟电压映射占空比）
+// V366 的 PA1/ONOFF_AD 由机械开关与防飞车电路驱动，不再作为模拟扳机。
+// PA3/VSP 为独立六档调速电位器；保留 TRG_DIGITAL_EN 宏兼容驱动层。
 //----------------------------------------------------------------------//
 #define TRG_DIGITAL_EN                         (0)
 
+/* 继承旧 V366 的 ONOFF 原始 ADC 阈值及采样时机，不能与 VSP 共用。 */
+#define ONOFF_ON_ADC                           (257u)
+#define ONOFF_OFF_ADC                          (237u)
+#define ONOFF_FILTER_MS                        (11u)
+#define POWER_ON_FLY_ADC                        (983u)
+#define VSP_GEAR_COUNT                         (6u)
+
 //vsp 占空比控制参数
 #define MAX_TOOL_DUTY 		                	(PWM_PRIOD_LOAD)//高电平最大占空比
-#define MIN_TOOL_DUTY 		   		 						(PWM_PRIOD_LOAD*0.12f) //电机最小占空比
+#define MIN_TOOL_DUTY 		   		 						(PWM_PRIOD_LOAD*0.20f) // V366 电位器最小占空比为 20%
 
 #define TRG_ON_ADC               						300//电机启动触发ADC
 #define MAX_TRG_ADC 		   		   						4000//电机触发最大值
-#define MIN_TRG_ADC              						600//电机触发最小值
+#define MIN_TRG_ADC                                (0) // 继承旧 V366 产品参数
 #define K_ADC_DUTY			   									(float)(MAX_TOOL_DUTY-MIN_TOOL_DUTY) / (float)(MAX_TRG_ADC - MIN_TRG_ADC)
 	
 //---PMW_duty---限速参数，此处限速VSP调节后的PWM_DUTY范围，即PWM范围 由VSP和LIMIT_MAX_DUTY和VSP和LIMIT_MIN_DUTY同时决定
@@ -132,6 +147,14 @@
 	
 //#define MAX_BUS_CURRENT_SETTINT        (float)(18.0)                                   						/* 母线电流，单位：A */
 #define CURRENT_ADC_PER_A              (float)(RSHUNT * AMPLIFICATION_GAIN * ADC_REF_VALUE / ADC_REFV / 1000.0f)  			/* 每安培电流ADC值 */
+/* 启动阶段附加软限流，给用户反馈的10A保护点预留余量，不替代任何OCP。
+ * 仅调节真实PWM，保护仍使用未经此软限制滤波的原采样；最终需实板确认峰值。
+ */
+#define ROUTER_START_CURRENT_A        (8.0f)
+#define ROUTER_START_CURRENT_REC_A    (7.0f)
+#define ROUTER_START_CURRENT_ADC      ((u16)(ROUTER_START_CURRENT_A*CURRENT_ADC_PER_A))
+#define ROUTER_START_CURRENT_REC_ADC  ((u16)(ROUTER_START_CURRENT_REC_A*CURRENT_ADC_PER_A))
+#define ROUTER_SOFT_START_MS          (2000u)  // 至少2s，输出到指令或速度到上限才退出启动调节
 //#define CURRENT_LIM_VALUE              (u16)(MAX_BUS_CURRENT_SETTINT * CURRENT_ADC_PER_A) 				/* 电流ADC值 */
 
 //短路保护
@@ -142,25 +165,25 @@
 #define IBus_Avg_REC_MS               (200) //ms
 #define IBus_Avg_REC_MS_CONUT         (u16)((float)IBus_Avg_REC_MS*SLOWLOOP_FRE/1000.0f) 
 
-#define IBus_Avg_OCP1                (40.0f)
+#define IBus_Avg_OCP1                              (55.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP1_AdcValue         (u16)(IBus_Avg_OCP1*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP1_MS               (2000) //ms
 #define IBus_Avg_OCP1_MS_CONUT         (u16)((float)IBus_Avg_OCP1_MS*SLOWLOOP_FRE/1000.0f) 
 	
-#define IBus_Avg_OCP2                 (50.0f)
+#define IBus_Avg_OCP2                              (60.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_AdcValue         (u16)(IBus_Avg_OCP2*CURRENT_ADC_PER_A)
 
-#define IBus_Avg_OCP2_MS               (500) //ms
+#define IBus_Avg_OCP2_MS                           (300) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_MS_CONUT        (u16)((float)IBus_Avg_OCP2_MS*SLOWLOOP_FRE/1000.0f) 
 
-#define IBus_Avg_OCP3                  (60.0f)
+#define IBus_Avg_OCP3                              (70.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP3_AdcValue         (u16)(IBus_Avg_OCP3*CURRENT_ADC_PER_A)
 
-#define IBus_Avg_OCP3_MS               (80) //ms
+#define IBus_Avg_OCP3_MS                           (20) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP3_MS_CONUT        (u16)((float)IBus_Avg_OCP3_MS*SLOWLOOP_FRE/1000.0f)
 
-#define IBus_Avg_OCP4                  (70.0f)
+#define IBus_Avg_OCP4                              (90.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP4_AdcValue         (u16)(IBus_Avg_OCP4*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP4_MS               (5) //ms
@@ -216,22 +239,22 @@
 
 
 
-	#define IBus_Smart_Peak_OCP1                      (80.00)/*unit:a*/
+#define IBus_Smart_Peak_OCP1                       (90.0f) // 继承旧 V366 产品参数
 	#define IBus_Smart_Peak_OCP1_AdcValue             (u16)(IBus_Smart_Peak_OCP1*CURRENT_ADC_PER_A)
-	#define IBus_Smart_Peak_OCP1_MS                   (800) //ms
+#define IBus_Smart_Peak_OCP1_MS                    (500) // 继承旧 V366 产品参数
 	#define IBus_Smart_OCP1_MS_Operation_Value        (u16)(32768.0f/((float)IBus_Smart_Peak_OCP1_MS*SLOWLOOP_FRE/1000.0f))
 
-	#define IBus_Smart_Peak_OCP2                      (90.00)/*unit:a*/
+#define IBus_Smart_Peak_OCP2                       (100.0f) // 继承旧 V366 产品参数
 	#define IBus_Smart_Peak_OCP2_AdcValue             (u16)(IBus_Smart_Peak_OCP2*CURRENT_ADC_PER_A)
-	#define IBus_Smart_Peak_OCP2_MS                   (100) //ms
+#define IBus_Smart_Peak_OCP2_MS                    (200) // 继承旧 V366 产品参数
 	#define IBus_Smart_OCP2_MS_Operation_Value        (u16)(32768.0f/((float)IBus_Smart_Peak_OCP2_MS*SLOWLOOP_FRE/1000.0f))
 		
-	#define IBus_Smart_Peak_OCP3                      (100.00)/*unit:a*/
+#define IBus_Smart_Peak_OCP3                       (110.0f) // 继承旧 V366 产品参数
 	#define IBus_Smart_Peak_OCP3_AdcValue             (u16)(IBus_Smart_Peak_OCP3*CURRENT_ADC_PER_A)
 	#define IBus_Smart_Peak_OCP3_MS                   (10) //ms
 	#define IBus_Smart_OCP3_MS_Operation_Value        (u16)(32768.0f/((float)IBus_Smart_Peak_OCP3_MS*SLOWLOOP_FRE/1000.0f))
 	
-	#define IBus_Smart_REC_MS                         80
+#define IBus_Smart_REC_MS                          (120) // 继承旧 V366 产品参数
 	#define IBus_Smart_REC_MS_Operation_Value        (u16)(32768.0f/((float)IBus_Smart_REC_MS*SLOWLOOP_FRE/1000.0f))
 #else
 
@@ -299,26 +322,26 @@
 #define VBUS_BASE_X100       ((u32)(VBUS_SHUNT_RATIO*ADC_REFV*100))
 
 //40
-#define VBus_Stb_UVP_V                                          (14.00f)/*unit:v*/
+#define VBus_Stb_UVP_V                             (14.80f) // 继承旧 V366 产品参数
 #define VBus_Stb_UVP_ADC     		       	                        (u16)(VBus_Stb_UVP_V * ADC_REF_VALUE / VBUS_SHUNT_RATIO / ADC_REFV)  		/* 稳态欠压保护阈值*/
 #define VBus_Stb_UVP_FiltMS                                     (100)/*unit:ms*/
 #define VBus_Stb_UVP_FiltMS_COUNT                               (u16)((float)VBus_Stb_UVP_FiltMS*SLOWLOOP_FRE/1000.0f)
                     
 #define VBus_Run_UVP1_V                                         (13.00f)/*unit:v*/
 #define VBus_Run_UVP1_ADC     		       	                      (u16)(VBus_Run_UVP1_V * ADC_REF_VALUE / VBUS_SHUNT_RATIO / ADC_REFV)
-#define VBus_Run_UVP1_FiltMS                                    (500)/*unit:ms*/
+#define VBus_Run_UVP1_FiltMS                       (200) // 继承旧 V366 产品参数
 #define VBus_Run_UVP1_FiltMS_COUNT                              (u16)((float)VBus_Run_UVP1_FiltMS*SLOWLOOP_FRE/1000.0f)
 	
 
 #define VBus_Run_UVP2_V                                         (8.00f)/*unit:v*/
 #define VBus_Run_UVP2_ADC     		       	                    (u16)(VBus_Run_UVP2_V * ADC_REF_VALUE / VBUS_SHUNT_RATIO / ADC_REFV)
-#define VBus_Run_UVP2_FiltMS                                    (10)/*unit:ms*/
+#define VBus_Run_UVP2_FiltMS                       (5) // 继承旧 V366 产品参数
 #define VBus_Run_UVP2_FiltMS_COUNT                              (u16)((float)VBus_Run_UVP2_FiltMS*SLOWLOOP_FRE/1000.0f)
 
     
-#define VBus_OVP_V                                              (22.50f)/*unit:v*/
+#define VBus_OVP_V                                 (24.00f) // 继承旧 V366 产品参数
 #define VBus_OVP_ADC     		       	                             (u16)(VBus_OVP_V * ADC_REF_VALUE / VBUS_SHUNT_RATIO / ADC_REFV)
-#define VBus_OVP_FiltMS                                         (300)/*unit:ms*/
+#define VBus_OVP_FiltMS                            (100) // 继承旧 V366 产品参数
 #define VBus_OVP_FiltMS_COUNT                                   (u16)((float)VBus_OVP_FiltMS*SLOWLOOP_FRE/1000.0f)
 
 #define SOC3_MV                     	                        (u32)((18.2)*100)
@@ -398,8 +421,8 @@
 #define MOS_TEMP_OVER_TIME     					50  			/* 单位：ms */
 #define RSM_MOS_TEMP_OVER_TIME 					500  			/* 单位：ms */
 /* 将用户设定值转换为ADC采样值 */
-#define MOS_TEMP_OVER_RES_RATIO					(float)(RT_95_F/(RT_95_F +MOS_TEMP_UP_RES)) 								// 分压比(下拉电阻/(上拉电阻+下拉电阻)) 需求表: 95±5℃
-#define RSM_MOS_TEMP_OVER_RES_RATIO			(float)(RT_85_F/(RT_85_F + MOS_TEMP_UP_RES)) 				// 分压比(下拉电阻/(上拉电阻+下拉电阻)) 需求表: 恢复 85±5℃
+#define MOS_TEMP_OVER_RES_RATIO					(float)(RT_100_F/(RT_100_F +MOS_TEMP_UP_RES)) 								// 分压比(下拉电阻/(上拉电阻+下拉电阻)) 旧 V366: 100℃保护
+#define RSM_MOS_TEMP_OVER_RES_RATIO			(float)(RT_95_F/(RT_95_F + MOS_TEMP_UP_RES)) 				// 分压比(下拉电阻/(上拉电阻+下拉电阻)) 旧 V366: 95℃恢复
 #define MOS_TEMP_OVER_THD_ADC       		(u16)(MOS_TEMP_OVER_RES_RATIO * MOS_TEMP_UP_VOL * ADC_REF_VALUE / ADC_REFV)			// 稳态过温保护阈值
 #define RSM_MOS_TEMP_OVER_THD_ADC   		(u16)(RSM_MOS_TEMP_OVER_RES_RATIO * MOS_TEMP_UP_VOL * ADC_REF_VALUE / ADC_REFV)	// 恢复过温保护阈值
 
@@ -413,9 +436,9 @@
 
 
 
-#define Tool_Dir_CW_Value                                       (0)/*顺时针方向值*/
-#define Tool_Dir_CCW_Value                                      (1)/*逆时针方向值*/
-#define Tool_Dir_Init                                         (0 )/*逆时针方向值*/
+#define Tool_Dir_CW_Value                          (1) // 继承旧 V366 产品参数
+#define Tool_Dir_CCW_Value                         (0) // 继承旧 V366 产品参数
+#define Tool_Dir_Init                                         (1) /* 旧 main 实际 CW=1；与相同闭源库的换相方向一致 */
 
 
 

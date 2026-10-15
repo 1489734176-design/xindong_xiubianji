@@ -63,8 +63,23 @@ void Bsp_Op_Init(void)
     GPIO_Init(OPAMP1_INP_PORT, &GPIO_InitStructure);
 }
 /**
+  * @brief 旧开关端口初始化入口，兼容旧应用调用
+  *        PA1 的 ONOFF_AD 为模拟检测，不再配置为数字扳机输入
+  */
+void W_port_init(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_StructInit(&GPIO_InitStructure);
+	RCC_AHBPeriphClockCmd(ADC_GPIO_CLK, ENABLE);
+
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
+	GPIO_InitStructure.GPIO_Pin = ONOFF_PIN;
+	GPIO_Init(ONOFF_PORT, &GPIO_InitStructure);
+}
+
+/**
   * @brief ADC GPIO初始化
-  *        配置电压、电流、BEMF、温度等ADC通道对应GPIO为模拟输入
+  *        分别配置 ONOFF_AD、VSP、电压、电流、BEMF、温度为模拟输入
   * @param None
   * @retval None
   */
@@ -76,12 +91,10 @@ void Bsp_Adc_Init(void)
 
     RCC_AHBPeriphClockCmd(ADC_GPIO_CLK, ENABLE);			// OK
 
-    /* PA1：数字模式高电平按下、下拉输入；ADC模式为模拟输入。 */
-#if(TRG_DIGITAL_EN)
-    GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_IPD;
-#else
+	/* PA1：ONOFF_AD 开关/防飞车检测，与 PA3 的调速电位器独立采样。 */
+	W_port_init();
+	/* PA3：VSP 始终保持模拟输入，不受旧数字扳机选项影响。 */
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_AIN;
-#endif
     GPIO_InitStructure.GPIO_Pin     = VR_PIN;
     GPIO_Init(VR_PORT, &GPIO_InitStructure);
 	
@@ -99,10 +112,7 @@ void Bsp_Adc_Init(void)
 	GPIO_InitStructure.GPIO_Pin     = IRMS_PIN;
     GPIO_Init(IRMS_PORT, &GPIO_InitStructure);
 
-//	   GPIO_InitStructure.GPIO_Pin     = DIR_PIN;
-//    GPIO_Init(DIR_PORT, &GPIO_InitStructure);
-
-	/* T_MOS（MOS温度） */
+	/* PA4：MOS 温度 NTC 独立模拟输入，不能随旧 DIR_PIN 初始化一起省略。 */
 	GPIO_InitStructure.GPIO_Pin     = T_MOS_PIN;
     GPIO_Init(T_MOS_PORT, &GPIO_InitStructure);
 
@@ -209,7 +219,8 @@ void En_Port_init(void)
     RCC_AHBPeriphClockCmd(EN_PIN_RCC_CLOCKGPIO, ENABLE);		// OK
 	
 	GPIO_SetBits(EN_PORT, EN_PIN);
-	/* EN 现接 PA11，普通 GPIO 推挽输出即可；PA13/PA14 保留给 SWD 调试，无需解除复用。 */
+	/* PA13 从 SWDIO 复用切为 AF1 普通 GPIO，不能再配置为 AF7。 */
+	GPIO_PinAFConfig(EN_PORT, EN_PIN_SRC, EN_PIN_AF);
 	GPIO_InitStructure.GPIO_Pin     =  EN_PIN;
     GPIO_InitStructure.GPIO_Speed   = GPIO_Speed_High;
     GPIO_InitStructure.GPIO_Mode    = GPIO_Mode_Out_PP;
@@ -224,6 +235,7 @@ void En_Port_init(void)
   */
 void Bsp_Com_Tx_Mode(uint8_t uart_enable)
 {
+#if BAT_COM_EN
     GPIO_InitTypeDef gpio;
 
     GPIO_StructInit(&gpio);
@@ -232,6 +244,10 @@ void Bsp_Com_Tx_Mode(uint8_t uart_enable)
     gpio.GPIO_Speed = GPIO_Speed_High;
     gpio.GPIO_Mode = uart_enable ? GPIO_Mode_AF_PP : GPIO_Mode_Out_PP;
     GPIO_Init(COM_TX_PORT, &gpio);
+#else
+	/* V366 未使用电池通信，不占用 PA11。 */
+	(void)uart_enable;
+#endif
 }
 
 /**
@@ -269,6 +285,7 @@ void Bsp_Com_init(void)
   */
 void Bsp_Usart_Init(void)
 {
+#if BAT_COM_EN
     USART_InitTypeDef USART_InitStruct;
 
     RCC_APB1PeriphClockCmd(RCC_APB1ENR_USART1_Msk, ENABLE);
@@ -285,6 +302,7 @@ void Bsp_Usart_Init(void)
 
     USART_Cmd(USART1, ENABLE);
     NVIC_SetPriority(USART1_IRQn, 2);
+#endif
 }
 
 /**
@@ -378,7 +396,7 @@ void Bsp_Gpio_Init(void)
 }
 /**
   * @brief ADC初始化函数
-  *        配置ADC扫描通道序列（BEMF_U/V/W、OP_O、ISUMAVG、VR、VBUS、DIR、T_MOS）
+  *        配置ADC扫描通道序列（BEMF_U/V/W、OP_O、ISUMAVG、ONOFF、VBUS、VSP、T_MOS）
   *        使用TIM1_CC4触发ADC转换
   * @param None
   * @retval None
@@ -413,9 +431,9 @@ void Board_ADC_Init(void)
     sUserAdc1Channel[4].sAdcChannel = ISUMAVG_CHANNEL;
     sUserAdc1Channel[4].pNext 			= &sUserAdc1Channel[5];
 
-    /* Rank5: VR（扳机电压/调速信号） */
-    sUserAdc1Channel[5].u8Rank 			= VR_RANK ;
-    sUserAdc1Channel[5].sAdcChannel = VR_CHANNEL;
+	/* Rank5：PA1 ONOFF_AD（开关/防飞车检测），保持原 ADC0 的采样位置。 */
+    sUserAdc1Channel[5].u8Rank 			= ONOFF_RANK;
+    sUserAdc1Channel[5].sAdcChannel = ONOFF_CHANNEL;
     sUserAdc1Channel[5].pNext 			= &sUserAdc1Channel[6];
 
 	/* Rank6: VBUS（母线电压） */
@@ -424,9 +442,9 @@ void Board_ADC_Init(void)
     sUserAdc1Channel[6].pNext =  &sUserAdc1Channel[7];
 
 
-	/* Rank7: DIR（方向检测） */
-	sUserAdc1Channel[7].u8Rank 			= DIR_RANK;
-    sUserAdc1Channel[7].sAdcChannel = DIR_CHANNEL ;
+	/* Rank7：PA3 VSP（调速电位器），替代旧 DIR 名称但不改变 ADC2 采样位置。 */
+	sUserAdc1Channel[7].u8Rank 			= VR_RANK;
+    sUserAdc1Channel[7].sAdcChannel = VR_CHANNEL;
     sUserAdc1Channel[7].pNext =  &sUserAdc1Channel[8];
 
 
@@ -435,8 +453,10 @@ void Board_ADC_Init(void)
     sUserAdc1Channel[8].sAdcChannel = T_MOS_CHANNEL ;
     sUserAdc1Channel[8].pNext =NULL;
 
-	     /* Select the ADC sample time*/
+	/* 保留核心通道的 3.5 周期采样；ONOFF/VSP 沿用旧修边机的 14.5 周期。 */
     Drv_Adc_Channel_Init(ADC1, sUserAdc1Channel, ADC_SampleTime_3_5);
+	ADC_SampleTimeConfig(ADC1, ONOFF_CHANNEL, ADC_SampleTime_14_5);
+	ADC_SampleTimeConfig(ADC1, VR_CHANNEL, ADC_SampleTime_14_5);
     /* Select the ADC external trigger source of the ADC is T1_CC4*/
     Drv_Adc_Basic_Init(ADC1, ADC_ExtTrig_T1_CC4);
 
@@ -510,10 +530,11 @@ void Drv_TIM2_Init(void)
 //  * @retval None
 //  */
 /**
-  * @brief TIM13初始化函数（2us计数周期，用于特定定时）
+  * @brief TIM13初始化函数（仅电池通信启用时配置）
   */
 void Drv_TIM13_Init(void)
 {
+#if BAT_COM_EN
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 
 		/* TIM13 Clock Enable */
@@ -528,6 +549,7 @@ void Drv_TIM13_Init(void)
 
 		/* Enable TIM13 */
     TIM_Cmd(TIM13, ENABLE);
+#endif
 }
 
 /**
@@ -724,7 +746,7 @@ void Bsp_Comp_Sensorless_Init(void)
 
 /**
   * @brief 初始化所有配置的外设
-  *        依次初始化ADC、比较器、运放、PWM、TIM13、TIM14、无感BEMF比较器
+  *        依次初始化ADC、比较器、运放、PWM、TIM14、无感BEMF比较器；TIM13仅供电池通信
   * @param None
   * @retval None
   */
@@ -735,7 +757,9 @@ void Peripheral_Init(void)
     Board_Opamp_Init();
 	  Drv_Pwm_Init(TIM1, PWM_PRIOD_LOAD, DEADTIME_LOAD);
 
+#if BAT_COM_EN
 		Drv_TIM13_Init();
+#endif
 		Drv_TIM14_Init_1();
 //		Drv_TIM6_Init();
 		/* Configure COMP BEMF Detect*/

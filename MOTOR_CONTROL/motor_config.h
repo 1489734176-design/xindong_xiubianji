@@ -131,7 +131,7 @@
 #define SBrake_MIN_Time_MS_CNT                                   (100*SLOWLOOP_1ms_CNT_LOAD)/*软制动最短时间，单位:ms*/
 
 /* 硬制动参数 */
-#define HBrake_En                                               (1)/*硬制动使能*/
+#define HBrake_En                                               (0)/*硬制动使能*/
 #define HBrake_MIN_Time_MS_CNT                                      (260*SLOWLOOP_1ms_CNT_LOAD)/*硬制动最短时间，单位:ms*/
 #define HBrake_Time_MS_CNT                                          (800*SLOWLOOP_1ms_CNT_LOAD)/*硬制动时间，单位:ms*/
 #define WAIT_Brake_Time_MS_CNT                                      (100*SLOWLOOP_1ms_CNT_LOAD)/*制动等待时间，单位:ms*/
@@ -142,14 +142,20 @@
 * 用于软启动斜坡控制：占空比逐步增减，防止电流冲击
 *
 *****************************************************************************/
-/* 慢速PWM占空比增减参数（虚拟占空比斜坡） */
-#define PWM_ADD_GAP                2  // 占空比增加间隔（中断次数）
-#define PWM_ADD_VALUE              2  // 占空比增加步进值
+/* 在16kHz中断中每1ms只增加1个CCR，15%至满量程约1.6s，不是原来的约100ms。 */
+#define PWM_ADD_GAP                SLOWLOOP_1ms_CNT_LOAD
+#define PWM_ADD_VALUE              1
 
 #define PWM_SUB_GAP                2  // 占空比减少间隔（中断次数）
 #define PWM_SUB_VALUE              2  // 占空比减少步进值
 
-/* 快速PWM占空比增减参数（实际占空比跟踪） */
+/* 正常输出跟踪也按1ms小步插值，避免PI更新后16kHz快速跳到新占空比。
+ * 下方原FAST参数仅留给峰值/平均硬限流降占空比，不能被慢跟踪拖延。
+ */
+#define PWM_TRACK_GAP                  SLOWLOOP_1ms_CNT_LOAD
+#define PWM_TRACK_VALUE                1
+
+/* 快速PWM占空比增减参数（保护降占空比） */
 #define PWM_ADD_FAST_GAP                1  // 快速增加间隔
 #define PWM_ADD_FAST_VALUE              2  // 快速增加步进值
 

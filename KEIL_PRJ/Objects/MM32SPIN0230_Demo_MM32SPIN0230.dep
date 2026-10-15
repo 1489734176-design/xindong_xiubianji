@@ -1,6 +1,6 @@
 Dependencies for Project 'MM32SPIN0230_Demo', Target 'MM32SPIN0230': (DO NOT MODIFY !)
 CompilerVersion: 5060960::V5.06 update 7 (build 960)::.\ARMCC
-F (..\USER\main.c)(0x6ABB7DA7)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\main.o --omf_browse .\objects\main.crf --depend .\objects\main.d)
+F (..\USER\main.c)(0x6ACF5FEE)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\main.o --omf_browse .\objects\main.crf --depend .\objects\main.d)
 I (..\USER\inc\main.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 I (..\DRIVE\inc\drv_iwdg.h)(0x6ABB7B78)
@@ -47,24 +47,24 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
 I (..\USER\inc\drv_inc.h)(0x6ABB7B78)
 I (..\SYSTEM\inc\systick.h)(0x6ABB7B78)
-I (..\USER\inc\board.h)(0x6ABB7DA7)
-I (..\DRIVE\inc\drv_adc.h)(0x6ABB7B78)
+I (..\USER\inc\board.h)(0x6ACF44FE)
+I (..\DRIVE\inc\drv_adc.h)(0x6ACF4529)
 I (..\DRIVE\inc\drv_comp.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_pwm.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_led.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_div.h)(0x6ABB7B78)
 I (..\USER\inc\mm32_it.h)(0x6ABB7B78)
-I (..\USER\inc\user_control.h)(0x6ABB7B78)
+I (..\USER\inc\user_control.h)(0x6ACF5FAB)
 I (..\MC_CORE\mc_core.h)(0x6ABB7B78)
-I (..\USER\inc\parameter.h)(0x6ABB7DA7)
+I (..\USER\inc\parameter.h)(0x6ACF606F)
 I (..\MM32SPIN0230\HAL_Lib\inc\HAL_device.h)(0x6ABB7B78)
-I (..\MOTOR_CONTROL\motor_control.h)(0x6ABB7B78)
+I (..\MOTOR_CONTROL\motor_control.h)(0x6ACF5EAC)
 I (..\USER\inc\flash_data_save.h)(0x6ABB7B78)
-I (..\USER\inc\led.h)(0x6ABB7DA7)
+I (..\USER\inc\led.h)(0x6ACF48D6)
 I (..\USER\inc\Bat_com.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
-F (..\USER\board.c)(0x6ABB7B78)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\board.o --omf_browse .\objects\board.crf --depend .\objects\board.d)
-I (..\USER\inc\board.h)(0x6ABB7DA7)
+F (..\USER\board.c)(0x6ACF4599)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\board.o --omf_browse .\objects\board.crf --depend .\objects\board.d)
+I (..\USER\inc\board.h)(0x6ACF44FE)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdio.h)(0x5E8E3CC2)
 I (..\MM32SPIN0230\Include\mm32_device.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\Include\mm32spin0230.h)(0x6ABB7B78)
@@ -109,7 +109,7 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
 I (..\USER\inc\drv_inc.h)(0x6ABB7B78)
 I (..\SYSTEM\inc\systick.h)(0x6ABB7B78)
-I (..\DRIVE\inc\drv_adc.h)(0x6ABB7B78)
+I (..\DRIVE\inc\drv_adc.h)(0x6ACF4529)
 I (..\DRIVE\inc\drv_comp.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_pwm.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_led.h)(0x6ABB7B78)
@@ -117,12 +117,12 @@ I (..\DRIVE\inc\drv_iwdg.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_div.h)(0x6ABB7B78)
 I (..\USER\inc\mm32_it.h)(0x6ABB7B78)
 I (..\USER\inc\main.h)(0x6ABB7B78)
-I (..\USER\inc\parameter.h)(0x6ABB7DA7)
+I (..\USER\inc\parameter.h)(0x6ACF606F)
 I (..\MM32SPIN0230\HAL_Lib\inc\HAL_device.h)(0x6ABB7B78)
-I (..\USER\inc\led.h)(0x6ABB7DA7)
+I (..\USER\inc\led.h)(0x6ACF48D6)
 I (..\USER\inc\Bat_com.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
-F (..\USER\mm32_it.c)(0x6ABB7B78)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\mm32_it.o --omf_browse .\objects\mm32_it.crf --depend .\objects\mm32_it.d)
+F (..\USER\mm32_it.c)(0x6ACF5FEE)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\mm32_it.o --omf_browse .\objects\mm32_it.crf --depend .\objects\mm32_it.d)
 I (..\USER\inc\drv_inc.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 I (..\MM32SPIN0230\HAL_Lib\inc\HAL_conf.h)(0x6ABB7B78)
@@ -166,9 +166,9 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_tim.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
 I (..\SYSTEM\inc\systick.h)(0x6ABB7B78)
-I (..\USER\inc\board.h)(0x6ABB7DA7)
+I (..\USER\inc\board.h)(0x6ACF44FE)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdio.h)(0x5E8E3CC2)
-I (..\DRIVE\inc\drv_adc.h)(0x6ABB7B78)
+I (..\DRIVE\inc\drv_adc.h)(0x6ACF4529)
 I (..\DRIVE\inc\drv_comp.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_pwm.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_led.h)(0x6ABB7B78)
@@ -176,18 +176,18 @@ I (..\DRIVE\inc\drv_iwdg.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_div.h)(0x6ABB7B78)
 I (..\USER\inc\mm32_it.h)(0x6ABB7B78)
 I (..\USER\inc\main.h)(0x6ABB7B78)
-I (..\USER\inc\parameter.h)(0x6ABB7DA7)
+I (..\USER\inc\parameter.h)(0x6ACF606F)
 I (..\MM32SPIN0230\HAL_Lib\inc\HAL_device.h)(0x6ABB7B78)
-I (..\USER\inc\user_control.h)(0x6ABB7B78)
+I (..\USER\inc\user_control.h)(0x6ACF5FAB)
 I (..\MC_CORE\mc_core.h)(0x6ABB7B78)
-I (..\MOTOR_CONTROL\motor_control.h)(0x6ABB7B78)
-I (..\USER\inc\led.h)(0x6ABB7DA7)
+I (..\MOTOR_CONTROL\motor_control.h)(0x6ACF5EAC)
+I (..\USER\inc\led.h)(0x6ACF48D6)
 I (..\USER\inc\Bat_com.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
-I (..\MOTOR_CONTROL\motor_config.h)(0x6ABB7B78)
-F (..\USER\inc\parameter.h)(0x6ABB7DA7)()
-F (..\USER\user_control.c)(0x6ABB7B78)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\user_control.o --omf_browse .\objects\user_control.crf --depend .\objects\user_control.d)
-I (..\USER\inc\user_control.h)(0x6ABB7B78)
+I (..\MOTOR_CONTROL\motor_config.h)(0x6ACF5E74)
+F (..\USER\inc\parameter.h)(0x6ACF606F)()
+F (..\USER\user_control.c)(0x6ACF5FED)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\user_control.o --omf_browse .\objects\user_control.crf --depend .\objects\user_control.d)
+I (..\USER\inc\user_control.h)(0x6ACF5FAB)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 I (..\MM32SPIN0230\Include\mm32spin0230.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include\core_cm0.h)(0x6A994285)
@@ -230,21 +230,21 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_tim.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
 I (..\MC_CORE\mc_core.h)(0x6ABB7B78)
-I (..\USER\inc\parameter.h)(0x6ABB7DA7)
+I (..\USER\inc\parameter.h)(0x6ACF606F)
 I (..\MM32SPIN0230\HAL_Lib\inc\HAL_device.h)(0x6ABB7B78)
-I (..\USER\inc\board.h)(0x6ABB7DA7)
+I (..\USER\inc\board.h)(0x6ACF44FE)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdio.h)(0x5E8E3CC2)
-I (..\MOTOR_CONTROL\motor_control.h)(0x6ABB7B78)
-I (..\DRIVE\inc\drv_adc.h)(0x6ABB7B78)
+I (..\MOTOR_CONTROL\motor_control.h)(0x6ACF5EAC)
+I (..\DRIVE\inc\drv_adc.h)(0x6ACF4529)
 I (..\USER\inc\flash_data_save.h)(0x6ABB7B78)
 I (..\USER\inc\Bat_com.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
-I (..\USER\inc\led.h)(0x6ABB7DA7)
+I (..\USER\inc\led.h)(0x6ACF48D6)
 I (..\SYSTEM\inc\systick.h)(0x6ABB7B78)
-I (..\MOTOR_CONTROL\motor_config.h)(0x6ABB7B78)
+I (..\MOTOR_CONTROL\motor_config.h)(0x6ACF5E74)
 I (..\DRIVE\inc\drv_pwm.h)(0x6ABB7B78)
-F (..\USER\led.c)(0x6ABB7DA7)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\led.o --omf_browse .\objects\led.crf --depend .\objects\led.d)
-I (..\USER\inc\board.h)(0x6ABB7DA7)
+F (..\USER\led.c)(0x6ACF48D6)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\led.o --omf_browse .\objects\led.crf --depend .\objects\led.d)
+I (..\USER\inc\board.h)(0x6ACF44FE)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdio.h)(0x5E8E3CC2)
 I (..\MM32SPIN0230\Include\mm32_device.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\Include\mm32spin0230.h)(0x6ABB7B78)
@@ -287,12 +287,12 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_syscfg.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_tim.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
-I (..\USER\inc\led.h)(0x6ABB7DA7)
-I (..\USER\inc\user_control.h)(0x6ABB7B78)
+I (..\USER\inc\led.h)(0x6ACF48D6)
+I (..\USER\inc\user_control.h)(0x6ACF5FAB)
 I (..\MC_CORE\mc_core.h)(0x6ABB7B78)
-I (..\USER\inc\parameter.h)(0x6ABB7DA7)
+I (..\USER\inc\parameter.h)(0x6ACF606F)
 I (..\MM32SPIN0230\HAL_Lib\inc\HAL_device.h)(0x6ABB7B78)
-F (..\USER\flash_data_save.c)(0x6ABB7B78)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\flash_data_save.o --omf_browse .\objects\flash_data_save.crf --depend .\objects\flash_data_save.d)
+F (..\USER\flash_data_save.c)(0x6ACF49EF)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\flash_data_save.o --omf_browse .\objects\flash_data_save.crf --depend .\objects\flash_data_save.d)
 I (..\USER\inc\flash_data_save.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdio.h)(0x5E8E3CC2)
 I (..\MM32SPIN0230\Include\mm32_device.h)(0x6ABB7B78)
@@ -336,10 +336,10 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_syscfg.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_tim.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
-I (..\USER\inc\user_control.h)(0x6ABB7B78)
+I (..\USER\inc\user_control.h)(0x6ACF5FAB)
 I (..\MC_CORE\mc_core.h)(0x6ABB7B78)
 F (..\USER\Bat_com.c)(0x6ABB7B78)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\bat_com.o --omf_browse .\objects\bat_com.crf --depend .\objects\bat_com.d)
-I (..\USER\inc\board.h)(0x6ABB7DA7)
+I (..\USER\inc\board.h)(0x6ACF44FE)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdio.h)(0x5E8E3CC2)
 I (..\MM32SPIN0230\Include\mm32_device.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\Include\mm32spin0230.h)(0x6ABB7B78)
@@ -384,10 +384,10 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
 I (..\USER\inc\Bat_com.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\string.h)(0x5E8E3CC2)
-I (..\USER\inc\user_control.h)(0x6ABB7B78)
+I (..\USER\inc\user_control.h)(0x6ACF5FAB)
 I (..\MC_CORE\mc_core.h)(0x6ABB7B78)
-I (..\MOTOR_CONTROL\motor_control.h)(0x6ABB7B78)
-I (..\USER\inc\parameter.h)(0x6ABB7DA7)
+I (..\MOTOR_CONTROL\motor_control.h)(0x6ACF5EAC)
+I (..\USER\inc\parameter.h)(0x6ACF606F)
 I (..\MM32SPIN0230\HAL_Lib\inc\HAL_device.h)(0x6ABB7B78)
 F (..\SYSTEM\systick.c)(0x6ABB7B78)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\systick.o --omf_browse .\objects\systick.crf --depend .\objects\systick.d)
 I (..\SYSTEM\inc\systick.h)(0x6ABB7B78)
@@ -474,7 +474,7 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_syscfg.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_tim.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
-I (..\DRIVE\inc\drv_adc.h)(0x6ABB7B78)
+I (..\DRIVE\inc\drv_adc.h)(0x6ACF4529)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdio.h)(0x5E8E3CC2)
 F (..\DRIVE\drv_comp.c)(0x6ABB7B78)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\drv_comp.o --omf_browse .\objects\drv_comp.crf --depend .\objects\drv_comp.d)
 I (..\DRIVE\inc\drv_comp.h)(0x6ABB7B78)
@@ -740,7 +740,7 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_tim.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_pwm.h)(0x6ABB7B78)
-I (..\USER\inc\parameter.h)(0x6ABB7DA7)
+I (..\USER\inc\parameter.h)(0x6ACF606F)
 I (..\MM32SPIN0230\HAL_Lib\inc\HAL_device.h)(0x6ABB7B78)
 F (..\MM32SPIN0230\HAL_Lib\src\hal_adc.c)(0x6ABB7B78)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\hal_adc.o --omf_browse .\objects\hal_adc.crf --depend .\objects\hal_adc.d)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_adc.h)(0x6ABB7B78)
@@ -1499,8 +1499,8 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_tim.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
 F (..\MM32SPIN0230\Source\KEIL_StartAsm\startup_mm32spin0230_keil.s)(0x6ABB7B78)(--cpu Cortex-M0 -g --apcs=interwork --pd "__MICROLIB SETA 1"-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include--pd "__UVISION_VERSION SETA 541" --pd "_RTE_ SETA 1"--list .\listings\startup_mm32spin0230_keil.lst --xref -o .\objects\startup_mm32spin0230_keil.o --depend .\objects\startup_mm32spin0230_keil.d)
-F (..\MOTOR_CONTROL\motor_control.c)(0x6ABB7B78)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\motor_control.o --omf_browse .\objects\motor_control.crf --depend .\objects\motor_control.d)
-I (..\MOTOR_CONTROL\motor_control.h)(0x6ABB7B78)
+F (..\MOTOR_CONTROL\motor_control.c)(0x6ACF606E)(-c --cpu Cortex-M0 -D__MICROLIB -g -O1 --apcs=interwork --split_sections -I ..\MM32SPIN0230\Include -I ..\MM32SPIN0230\HAL_Lib\inc -I ..\DRIVE\inc -I ..\SYSTEM\inc -I ..\USER\inc -I ..\M1_CONTROL\inc -I ..\MM_MCLIB\inc -I ..\MM_MCLIB\inc -I ..\MY_MC -I ..\MOTOR_CONTROL -I ..\MC_CORE-I.\RTE\_MM32SPIN0230-ID:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include-D__UVISION_VERSION="541" -D_RTE_ -DUSE_STDPERIPH_DRIVER -DUSE_5V-o .\objects\motor_control.o --omf_browse .\objects\motor_control.crf --depend .\objects\motor_control.d)
+I (..\MOTOR_CONTROL\motor_control.h)(0x6ACF5EAC)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdint.h)(0x5E8E3CC2)
 I (..\MM32SPIN0230\Include\mm32spin0230.h)(0x6ABB7B78)
 I (D:\Users\mym02\AppData\Local\Arm\Packs\ARM\CMSIS\5.9.0\CMSIS\Core\Include\core_cm0.h)(0x6A994285)
@@ -1544,13 +1544,13 @@ I (..\MM32SPIN0230\HAL_Lib\inc\hal_usart.h)(0x6ABB7B78)
 I (..\MM32SPIN0230\HAL_Lib\inc\hal_uid.h)(0x6ABB7B78)
 I (..\MC_CORE\mc_core.h)(0x6ABB7B78)
 I (..\DRIVE\inc\drv_pwm.h)(0x6ABB7B78)
-I (..\USER\inc\parameter.h)(0x6ABB7DA7)
+I (..\USER\inc\parameter.h)(0x6ACF606F)
 I (..\MM32SPIN0230\HAL_Lib\inc\HAL_device.h)(0x6ABB7B78)
-I (..\USER\inc\board.h)(0x6ABB7DA7)
+I (..\USER\inc\board.h)(0x6ACF44FE)
 I (D:\Users\mym02\AppData\Local\Keil_v5\ARM\ARMCC\include\stdio.h)(0x5E8E3CC2)
-I (..\DRIVE\inc\drv_adc.h)(0x6ABB7B78)
-I (..\USER\inc\user_control.h)(0x6ABB7B78)
+I (..\DRIVE\inc\drv_adc.h)(0x6ACF4529)
+I (..\USER\inc\user_control.h)(0x6ACF5FAB)
 I (..\SYSTEM\inc\systick.h)(0x6ABB7B78)
-I (..\MOTOR_CONTROL\motor_config.h)(0x6ABB7B78)
-F (..\MOTOR_CONTROL\motor_config.h)(0x6ABB7B78)()
+I (..\MOTOR_CONTROL\motor_config.h)(0x6ACF5E74)
+F (..\MOTOR_CONTROL\motor_config.h)(0x6ACF5E74)()
 F (..\MC_CORE\002_mc_core_HS-V1_01.lib)(0x6ABB7DA7)()

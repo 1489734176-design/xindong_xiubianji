@@ -87,6 +87,9 @@ typedef struct
 	uint16_t	IBusAvg1_Adc;   // 平均电流1 ADC值
 	uint16_t	IBusAvg_Adc;    // 平均电流ADC值
 	uint16_t	IBusPeak_Adc;   // 峰值电流ADC值
+	uint16_t	onoff_adc;      // PA1/ONOFF_AD 原始 ADC；与 PA3/VSP 调速值分离
+	uint16_t	vsp_adc;        // PA3/ADC2，恢复旧档位及占空比计算的原始数据字段
+	uint32_t	speed_ref_erpm; // 继承新框架的电气转速上限，与 get_speed() 单位一致
 	uint8_t		u8_1ms_flag;    // 1ms时基标志
 	uint32_t 	VBus_Vx100;     // 母线电压（单位0.01V）
 	uint16_t	dir_adc;        // 方向ADC值
@@ -134,8 +137,10 @@ void gears_deal(void);
 void pwm_duty_aim_deal(void);
 void user_WrenchKey_Handler(void);
 void user_para_init(void);
+void power_on_fly_machine_handle(void); // 上电早期检测防飞车电路，不在 ISR 内调用
 void Vcc_5V_CAL(void);
 void user_gears_handle(void);
+void get_gear_from_adc(unsigned int adc_value); // 原电压宏及switch逻辑保持旧实现
 
 //extern DiagFlag DiagnoseFAULT;
 

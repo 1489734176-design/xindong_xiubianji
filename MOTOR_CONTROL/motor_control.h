@@ -72,6 +72,8 @@ typedef struct
 	uint16_t pwm_duty_aim2;      // 目标占空比2（PI输出）
 	uint16_t pwm_duty_aim_per;   // 目标占空比预设值
 	uint16_t pwm_duty_virtual;   // 虚拟占空比（软斜坡输出）
+	uint8_t startup_complete;   // 至少2s且斜坡完成后，退出启动专用电流调节
+	uint8_t startup_current_limited; // 启动软限流状态，供PI抗积分饱和同步使用
 
 	/* 制动使能 */
 	uint8_t  hbrake_en;          // 硬制动使能
@@ -81,8 +83,9 @@ typedef struct
 	/* 运行状态 */
 	uint8_t motor_run_last_dir;  // 上次运行方向
 	uint32_t motor_run_count;    // 运行计时器
-	uint32_t motor_speed;        // 电机转速（RPM）
+	uint32_t motor_speed;        // 电气转速 eRPM；机械 RPM 还需除以极对数
 	uint32_t	time_count_60_degree_filter;  // 60度电周期滤波时间
+	uint32_t time_count_60_degree_filter_q8; // 保留周期小数，避免整数截断产生稳态测速跳变
 
 }Motor_Control_list;
 
@@ -126,4 +129,6 @@ void get_speed(void);
 
 /* 速度PI调节器复位 */
 void  Speed_PI_reset(void);
+/* 1ms速度调节：参考软上升、闭环承接与正常输出小步限制 */
+void motor_speed_control_1ms(void);
 #endif

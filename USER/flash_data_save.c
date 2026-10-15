@@ -179,14 +179,15 @@ void read_user_data(void)
 	res=read_data_for_flash(save_data_buf,3);
 	if(res==0)
 	{
-		save_data_buf[1]=1;  // 默认挡位=1
+		save_data_buf[1]=2;  // 继承旧无记录默认档位；启动随后由 VSP 旋钮覆盖
 		save_data_buf[2]=0;  // 默认自动停机=0
 	}
 		
 	user_list.gears_level=save_data_buf[1];
-	if(user_list.gears_level>1)
+	/* 保持旧存储值的 0~2 校验，不从旧扳手记录恢复物理六档旋钮位置。 */
+	if(user_list.gears_level>2)
 	{
-		user_list.gears_level=1;
+		user_list.gears_level=2;
 	}
 	
 //	user_list.gears_ccw_level=save_data_buf[2];
