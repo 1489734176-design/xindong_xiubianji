@@ -1442,7 +1442,7 @@ void motor_speed_control_1ms(void)
 	Speed_Pid.Limit_max_data=motor_control_list.pwm_duty_virtual;
 	if(Speed_Pid.Limit_max_data>motor_control_list.pwm_duty_aim)
 	{
-		Speed_Pid.Limit_max_data=motor_control_list.pwm_duty_aim;
+		Speed_Pid.Limit_max_data=LIMIT_MAX_PWN_DUTY;
 	}
 	if(motor_control_list.startup_current_limited &&
 	   Speed_Pid.Limit_max_data>mc_core_list.pwm_actual_runing_data)

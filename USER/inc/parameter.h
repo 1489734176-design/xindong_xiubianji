@@ -85,10 +85,13 @@
 //----------------------------------------------------------------------*/
 #define DIR_DETECT_EN     (0)
 #define LED_EN            (1)
-#define PWM_DUTY_GEARS1    (u32)(32768 * 0.5f)  
-#define PWM_DUTY_GEARS2    (u32)(32768 * 0.80f)    
-#define PWM_DUTY_GEARS3    (u32)(32768 * 1.0f) 
-#define PWM_DUTY_GEARS4    (u32)(32768 * 1.0f) 
+/* 六档目标占空比，沿用旧user_gears_handle的Q15比例；不是机械RPM表。 */
+#define PWM_DUTY_GEARS1    ((u32)(32768 * 0.5f))
+#define PWM_DUTY_GEARS2    ((u32)(32768 * 0.6f))
+#define PWM_DUTY_GEARS3    ((u32)(32768 * 0.7f))
+#define PWM_DUTY_GEARS4    ((u32)(32768 * 0.8f))
+#define PWM_DUTY_GEARS5    ((u32)(32768 * 0.9f))
+#define PWM_DUTY_GEARS6    ((u32)(32768 * 1.0f))
 //---------------------------------------------------------------------------------------------------------------------------------------------------//
 //************************************************************************************************************************************************/
 
@@ -106,7 +109,31 @@
 #define POWER_ON_FLY_ADC                        (983u)
 #define VSP_GEAR_COUNT                         (6u)
 
-//vsp 占空比控制参数
+/* 六档旋钮独立升/降档阈值，单位mV；内部档位0~5对应面板1~6档。
+ * 升档与降档不能由同一中点推算，下面保留实测名义值便于单独校准。
+ */
+#define VSP_GEAR_UP_1_TO_2_MV                  (1000u)
+#define VSP_GEAR_UP_2_TO_3_MV                  (2100u)
+#define VSP_GEAR_UP_3_TO_4_MV                  (3000u)
+#define VSP_GEAR_UP_4_TO_5_MV                  (3900u)
+#define VSP_GEAR_UP_5_TO_6_MV                  (4700u)
+#define VSP_GEAR_DOWN_6_TO_5_MV                (4350u)
+#define VSP_GEAR_DOWN_5_TO_4_MV                (3100u)
+#define VSP_GEAR_DOWN_4_TO_3_MV                (2150u)
+#define VSP_GEAR_DOWN_3_TO_2_MV                (1150u)
+#define VSP_GEAR_DOWN_2_TO_1_MV                (150u)
+
+/* 误差裕量向保持当前档位的方向外扩：升档+50mV，降档-50mV。
+ * 这是防误触发裕量，不是ADC增益/零点校准；设0可使用名义阈值。
+ * 同一目标档位须连续满足10个1ms采样，回到保持区或改变方向即清计数。
+ */
+#define VSP_GEAR_MARGIN_MV                    (50u)
+#define VSP_GEAR_CONFIRM_MS                   (10u)
+#define VSP_GEAR_MV_TO_ADC(mv)                 ((u16)(((u32)(mv)*ADC_REF_VALUE+ADC_REFV*500u)/(ADC_REFV*1000u)))
+
+/* 六档固定PWM基准；MIN/MAX_TRG_ADC及K_ADC_DUTY仅保留供旧模拟接口兼容，
+ * 当前运行路径不使用这些ADC比例参数计算目标，目标由user_gears_handle选择。
+ */
 #define MAX_TOOL_DUTY 		                	(PWM_PRIOD_LOAD)//高电平最大占空比
 #define MIN_TOOL_DUTY 		   		 						(PWM_PRIOD_LOAD*0.20f) // V366 电位器最小占空比为 20%
 

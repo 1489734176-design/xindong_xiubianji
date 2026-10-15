@@ -140,7 +140,7 @@ void user_para_init(void);
 void power_on_fly_machine_handle(void); // 上电早期检测防飞车电路，不在 ISR 内调用
 void Vcc_5V_CAL(void);
 void user_gears_handle(void);
-void get_gear_from_adc(unsigned int adc_value); // 原电压宏及switch逻辑保持旧实现
+void get_gear_from_adc(unsigned int adc_value); // 仅1ms任务调用：独立升降阈值、误差裕量及连续确认
 
 //extern DiagFlag DiagnoseFAULT;
 

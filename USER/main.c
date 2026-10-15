@@ -111,9 +111,10 @@ int main(void)
 	for(i=0;i<10;i++)
 	{
 		User_Temperature_Handler_Fast();
-		get_gear_from_adc(user_list.vsp_adc);
+		/* 档位确认在下面的真实1ms任务完成，快速循环不能当成10ms消抖。 */
 	}
 	pwm_duty_aim_deal();
+	user_gears_handle(); // 初始化也使用固定档位目标，不能以未缩放的满量程目标接入PI。
 	error_hold_updata();
 #if LIMIT_SPEED_EN
 	Speed_PI_init();
@@ -138,8 +139,10 @@ int main(void)
 			motor_on_off_control();
 			user_oc_handle();
 			User_Temperature_Handler();
-			pwm_duty_aim_deal();
-			/* 与旧工程一致，运行中不额外调用档位ADC判定/档位二次缩放。 */
+			/* ADC每1ms只判档一次；同一档内ADC变化不得直接影响PWM目标。 */
+			get_gear_from_adc(user_list.vsp_adc);
+			pwm_duty_aim_deal(); // 重建固定基准，不再做ADC连续调速。
+			user_gears_handle(); // 按确认档位选择六档目标，不在上次结果上重复乘比例。
 
 			/* 先锁存本次保护结果，同一拍撤销许可；故障恢复必须释放机械开关。 */
 			error_hold_updata();

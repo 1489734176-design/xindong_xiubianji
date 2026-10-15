@@ -1604,21 +1604,43 @@ u32 PI_sum_i=0;
 u32 PI_p=0;
 u32	pwm_duty_aim_PI_OUT=0;
 /**
- * @brief  目标PWM占空比计算
- *        PA3/VSP 独立电位器映射到 20%~100%，PA1 开关独立控制运行许可。
+ * @brief 六档PWM目标的固定基准，PA3/VSP ADC只参与档位判定。
+ *        user_gears_handle按确认档位缩放基准；PA1仍独立控制运行许可。
  */
 void pwm_duty_aim_deal(void)
 {
-	/* 完全沿用旧VSP计算：浮点运算后一次转uint16_t，不改为整数插值，
-	 * 不增加ADC上限钳位；硬件PWM仍由pwm_set的原周期上下限约束。
+	/* 不能再用vsp_adc连续映射基准，否则同一档内仍会随ADC变化调速。
+	 * 每拍重建固定基准，避免档位比例在上拍结果上重复相乘。
 	 */
-	if(user_list.vsp_adc<MIN_TRG_ADC)
+	motor_control_list.pwm_duty_aim_per=MAX_TOOL_DUTY;
+	
+	switch(user_list.gears_level)
 	{
-		user_list.vsp_adc=MIN_TRG_ADC;
+		case 0:
+			user_list.speed_ref_erpm=10000*2;
+			break;
+		case 1:
+			user_list.speed_ref_erpm=14000*2;
+			break;
+		case 2:
+			user_list.speed_ref_erpm=18000*2;
+			break;
+		case 3:
+			user_list.speed_ref_erpm=22000*2;
+			break;
+		case 4:
+			user_list.speed_ref_erpm=26000*2;
+			break;
+		case 5:
+			user_list.speed_ref_erpm=30000*2;
+			break;
+		default:
+			/* 非法档位按最低档目标处理，不能因越界意外给出满占空比。 */
+			user_list.speed_ref_erpm=10000*2;
+			break;
 	}
-	motor_control_list.pwm_duty_aim_per=(uint16_t)((float)(user_list.vsp_adc - MIN_TRG_ADC)*K_ADC_DUTY+ MIN_TOOL_DUTY);
-	motor_control_list.pwm_duty_aim=motor_control_list.pwm_duty_aim_per;
-	user_list.speed_ref_erpm=ROUTER_MAX_SPEED_ERPM;
+	
+//	user_list.speed_ref_erpm=ROUTER_MAX_SPEED_ERPM;
 }
 
 uint8_t pulse_mode=0;
@@ -1646,77 +1668,111 @@ void pulse_th_handle(void)
 
 
 }
-/* 档位ADC电压、换算及滞回公式完全保留旧工程，不改为硬编码数组。 */
-#define VREF 5.0f
-#define ADC_RESOLUTION 4095
-#define HYSTERESIS_V 0.1f
-#define HYSTERESIS_V2 0.08f
-#define VOLTAGE_TO_ADC(v) ((unsigned int)((v) * ADC_RESOLUTION / VREF))
-#define GEAR1_VOLTAGE 0.05f
-#define GEAR2_VOLTAGE 0.6f
-#define GEAR3_VOLTAGE 1.76f
-#define GEAR4_VOLTAGE 3.50f
-#define GEAR5_VOLTAGE 4.6f
-#define GEAR6_VOLTAGE 4.95f
-#define THRESHOLD_V_GEAR1 ((GEAR1_VOLTAGE + GEAR2_VOLTAGE) / 2.0f)
-#define THRESHOLD_V_GEAR2 ((GEAR2_VOLTAGE + GEAR3_VOLTAGE) / 2.0f)
-#define THRESHOLD_V_GEAR3 ((GEAR3_VOLTAGE + GEAR4_VOLTAGE) / 2.0f)
-#define THRESHOLD_V_GEAR4 ((GEAR4_VOLTAGE + GEAR5_VOLTAGE) / 2.0f)
-#define THRESHOLD_V_GEAR5 ((GEAR5_VOLTAGE + GEAR6_VOLTAGE) / 2.0f)
-#define THRESHOLD_ADC_GEAR1 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR1)
-#define THRESHOLD_ADC_GEAR2 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR2)
-#define THRESHOLD_ADC_GEAR3 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR3)
-#define THRESHOLD_ADC_GEAR4 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR4)
-#define THRESHOLD_ADC_GEAR5 VOLTAGE_TO_ADC(THRESHOLD_V_GEAR5)
-#define HYSTERESIS_ADC VOLTAGE_TO_ADC(HYSTERESIS_V)
-#define HYSTERESIS_ADC2 VOLTAGE_TO_ADC(HYSTERESIS_V2)
-
+/**
+ * @brief 六档旋钮判定，仅由1ms任务调用；每次确认后最多升/降一档。
+ *        独立升降阈值加误差裕量，不再使用旧档位电压中点。
+ *        阈值之间保持当前档位；抖动或改变方向后须重新连续确认。
+ */
 void get_gear_from_adc(unsigned int adc_value)
 {
-	switch(user_list.gears_level)
+	/* 两表均按面板1~6档的相邻边界排列：1↔2、2↔3、3↔4、4↔5、5↔6。 */
+	static const u16 up_adc[VSP_GEAR_COUNT-1u]=
 	{
-		case 0:
-			if(adc_value > THRESHOLD_ADC_GEAR1 + HYSTERESIS_ADC)
-				user_list.gears_level = 1;
-			break;
-		case 1:
-			if(adc_value > THRESHOLD_ADC_GEAR2 + HYSTERESIS_ADC)
-				user_list.gears_level = 2;
-			else if(adc_value < THRESHOLD_ADC_GEAR1 - HYSTERESIS_ADC)
-				user_list.gears_level = 0;
-			break;
-		case 2:
-			if(adc_value > THRESHOLD_ADC_GEAR3 + HYSTERESIS_ADC)
-				user_list.gears_level = 3;
-			else if(adc_value < THRESHOLD_ADC_GEAR2 - HYSTERESIS_ADC)
-				user_list.gears_level = 1;
-			break;
-		case 3:
-			if(adc_value > THRESHOLD_ADC_GEAR4 + HYSTERESIS_ADC)
-				user_list.gears_level = 4;
-			else if(adc_value < THRESHOLD_ADC_GEAR3 - HYSTERESIS_ADC)
-				user_list.gears_level = 2;
-			break;
-		case 4:
-			if(adc_value > THRESHOLD_ADC_GEAR5 + HYSTERESIS_ADC2)
-				user_list.gears_level = 5;
-			else if(adc_value < THRESHOLD_ADC_GEAR4 - HYSTERESIS_ADC)
-				user_list.gears_level = 3;
-			break;
-		case 5:
-			if(adc_value < THRESHOLD_ADC_GEAR5 - HYSTERESIS_ADC2)
-				user_list.gears_level = 4;
-			break;
-		default:
-			user_list.gears_level = 0;
-			break;
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_UP_1_TO_2_MV+VSP_GEAR_MARGIN_MV),
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_UP_2_TO_3_MV+VSP_GEAR_MARGIN_MV),
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_UP_3_TO_4_MV+VSP_GEAR_MARGIN_MV),
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_UP_4_TO_5_MV+VSP_GEAR_MARGIN_MV),
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_UP_5_TO_6_MV+VSP_GEAR_MARGIN_MV)
+	};
+	static const u16 down_adc[VSP_GEAR_COUNT-1u]=
+	{
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_2_TO_1_MV-VSP_GEAR_MARGIN_MV),
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_3_TO_2_MV-VSP_GEAR_MARGIN_MV),
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_4_TO_3_MV-VSP_GEAR_MARGIN_MV),
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_5_TO_4_MV-VSP_GEAR_MARGIN_MV),
+		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_6_TO_5_MV-VSP_GEAR_MARGIN_MV)
+	};
+	static u8 pending_gear=0;
+	static u8 pending_from=VSP_GEAR_COUNT;
+	static u16 confirm_count=0;
+	u8 gear=user_list.gears_level;
+	u8 next_gear=gear;
+
+	if(gear>=VSP_GEAR_COUNT)
+	{
+		user_list.gears_level=0;
+		pending_from=VSP_GEAR_COUNT;
+		confirm_count=0;
+		return;
+	}
+	if(gear<VSP_GEAR_COUNT-1u && adc_value>up_adc[gear])
+	{
+		next_gear=gear+1u;
+	}
+	else if(gear>0 && adc_value<down_adc[gear-1u])
+	{
+		next_gear=gear-1u;
+	}
+
+	if(next_gear==gear)
+	{
+		pending_from=VSP_GEAR_COUNT;
+		confirm_count=0;
+		return;
+	}
+	if(pending_from!=gear || pending_gear!=next_gear)
+	{
+		pending_from=gear;
+		pending_gear=next_gear;
+		confirm_count=0;
+	}
+	if(confirm_count<VSP_GEAR_CONFIRM_MS)
+	{
+		confirm_count++;
+	}
+	if(confirm_count>=VSP_GEAR_CONFIRM_MS)
+	{
+		user_list.gears_level=pending_gear;
+		pending_from=VSP_GEAR_COUNT;
+		confirm_count=0;
 	}
 }
 
+/**
+ * @brief 按确认档位选择固定PWM目标；这里不读ADC、不重复计档位消抖。
+ *        使用旧六档Q15比例50/60/70/80/90/100%，基准每拍由前置函数重建。
+ *        这里只写目标，实际输出仍经过软启动、速度PI和电流保护。
+ */
 void user_gears_handle(void)
 {
-	get_gear_from_adc(mc_core_list.Board_ADC_DATA.u16VR);
-	motor_control_list.pwm_duty_aim=motor_control_list.pwm_duty_aim_per;
+	u32 gear_duty_rate;
+
+	switch(user_list.gears_level)
+	{
+		case 0:
+			gear_duty_rate=PWM_DUTY_GEARS1;
+			break;
+		case 1:
+			gear_duty_rate=PWM_DUTY_GEARS2;
+			break;
+		case 2:
+			gear_duty_rate=PWM_DUTY_GEARS3;
+			break;
+		case 3:
+			gear_duty_rate=PWM_DUTY_GEARS4;
+			break;
+		case 4:
+			gear_duty_rate=PWM_DUTY_GEARS5;
+			break;
+		case 5:
+			gear_duty_rate=PWM_DUTY_GEARS6;
+			break;
+		default:
+			/* 非法档位按最低档目标处理，不能因越界意外给出满占空比。 */
+			gear_duty_rate=PWM_DUTY_GEARS1;
+			break;
+	}
+	motor_control_list.pwm_duty_aim=(motor_control_list.pwm_duty_aim_per*gear_duty_rate)>>15;
 }
 
 /**
