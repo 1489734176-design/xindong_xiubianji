@@ -16,7 +16,9 @@
 #define LED_ERROR_ON()              GPIO_SetBits(LED_LIGHT_PORT, LED_LIGHT_PIN)
 #define LED_ERROR_OFF()             GPIO_ResetBits(LED_LIGHT_PORT, LED_LIGHT_PIN)
 
-/* 沿用旧产品故障闪烁编号及优先级，只把三灯同时闪适配成 PA10 单灯闪。 */
+/* 与参考程序LedError_Control一致：以下编号及优先级不变，PA10显示相同闪烁次数。
+ * 参考程序含“其它故障11闪”；新增故障的显示由parameter.h中的独立宏控制。
+ */
 #define LED_FAULT_HW_OCP            (1)     /* 硬件/ADC 快速过流 */
 #define LED_FAULT_BAT_TEMP          (2)     /* 电池温度；本板功能关闭 */
 #define LED_FAULT_MOS_TEMP          (3)     /* MOS 温度/过载 */
@@ -32,7 +34,7 @@
 #define LED_FAULT_MOS_BRIDGE        (9)
 #define LED_FAULT_LACK_PHASE        (10)
 #define LED_FAULT_OTHER             (11)
-#define LED_FAULT_BAT_COM           (11)    /* 通信关闭；若有锁存则按其它故障显示 */
+#define LED_FAULT_BAT_COM           (11)    /* 参考程序无此故障；LED_FAULT_BAT_COM_EN默认关闭显示 */
 
 typedef struct
 {

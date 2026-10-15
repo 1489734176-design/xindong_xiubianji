@@ -1,0 +1,41 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"D:\mym\NXN\xindong\xiubianji\source code\NX32F003S-xindongV4-V366PCB-6gear\MOTOR_CONTROL\motor_control.c", line 288: Warning:  #550-D: variable "avg_current"  was set but never used
+  	u16 avg_current=0;
+  	    ^
+D:\mym\NXN\xindong\xiubianji\source code\NX32F003S-xindongV4-V366PCB-6gear\MOTOR_CONTROL\motor_control.c: 1 warning, 0 errors
+
+Program Size: Code=18908 RO-data=244 RW-data=192 ZI-data=1664  
+

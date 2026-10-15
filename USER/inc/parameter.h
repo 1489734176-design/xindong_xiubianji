@@ -89,6 +89,8 @@
 //----------------------------------------------------------------------*/
 #define DIR_DETECT_EN     (0)
 #define LED_EN            (1)
+/* 参考程序没有电池通信闪码，默认不显示；只控制闪灯，不关闭故障保护。 */
+#define LED_FAULT_BAT_COM_EN (0)
 /* 六档目标占空比，沿用旧user_gears_handle的Q15比例；不是机械RPM表。 */
 #define PWM_DUTY_GEARS1    ((u32)(32768 * 0.5f))
 #define PWM_DUTY_GEARS2    ((u32)(32768 * 0.6f))
@@ -199,13 +201,13 @@
 #define IBus_Avg_OCP1                              (45.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP1_AdcValue         (u16)(IBus_Avg_OCP1*CURRENT_ADC_PER_A)
 
-#define IBus_Avg_OCP1_MS               (2000) //ms
+#define IBus_Avg_OCP1_MS               (3000) //ms
 #define IBus_Avg_OCP1_MS_CONUT         (u16)((float)IBus_Avg_OCP1_MS*SLOWLOOP_FRE/1000.0f) 
 	
 #define IBus_Avg_OCP2                              (55.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_AdcValue         (u16)(IBus_Avg_OCP2*CURRENT_ADC_PER_A)
 
-#define IBus_Avg_OCP2_MS                           (300) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP2_MS                           (500) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_MS_CONUT        (u16)((float)IBus_Avg_OCP2_MS*SLOWLOOP_FRE/1000.0f) 
 
 #define IBus_Avg_OCP3                              (65.0f) // 继承旧 V366 产品参数
@@ -233,21 +235,21 @@
 //此处堵转时间注意根据实际情况调整
 #define Block_Protect_RUNING_TIME                     (100*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 
-#define Block_Protect_Current1                      (65.00)/*unit:a*/
+#define Block_Protect_Current1                      (45.00)/*unit:a*/
 #define Block_Protect_Current1_AdcValue             (u16)(Block_Protect_Current1*CURRENT_ADC_PER_A)
 #define Block_Protect_Current1_TIME                 (80*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 
 
-#define Block_Protect_Current2                      (75.00)/*unit:a*/
+#define Block_Protect_Current2                      (55.00)/*unit:a*/
 #define Block_Protect_Current2_AdcValue             (u16)(Block_Protect_Current2*CURRENT_ADC_PER_A)
 #define Block_Protect_Current2_TIME                 (50*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 
 
-#define Block_Protect_Current3                      (85.00)/*unit:a*/
+#define Block_Protect_Current3                      (75.00)/*unit:a*/
 #define Block_Protect_Current3_AdcValue             (u16)(Block_Protect_Current3*CURRENT_ADC_PER_A)
 #define Block_Protect_Current3_TIME                 (30*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 
-#define Block_Protect_Current4                      (95.00)/*unit:a*/
+#define Block_Protect_Current4                      (85.00)/*unit:a*/
 #define Block_Protect_Current4_AdcValue             (u16)(Block_Protect_Current4*CURRENT_ADC_PER_A)
 #define Block_Protect_Current4_TIME                 (20*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 

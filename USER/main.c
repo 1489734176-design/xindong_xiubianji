@@ -113,6 +113,8 @@ int main(void)
 		User_Temperature_Handler_Fast();
 		/* 档位确认在下面的真实1ms任务完成，快速循环不能当成10ms消抖。 */
 	}
+	/* ADC已稳定，先按减档边界覆盖旧Flash档位，再建立本次启动的转速/PWM目标。 */
+	user_gears_init(user_list.vsp_adc);
 	pwm_duty_aim_deal();
 	user_gears_handle(); // 初始化也使用固定档位目标，不能以未缩放的满量程目标接入PI。
 	error_hold_updata();

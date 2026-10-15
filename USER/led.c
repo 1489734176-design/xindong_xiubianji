@@ -68,10 +68,16 @@ void UO_Led_Handler(void)
 	}
 }
 
-/** @brief 旧故障优先级采用结构位名翻译，不搬旧错误字的数值掩码。 */
+/** @brief 按参考程序的位名和优先级选闪码；显示开关不能修改故障锁存。 */
 uint8_t LedError_Control(void)
 {
-	if(machine_error_hold.userErr_hold.word==0 && machine_error_hold.MC_error_hold.word==0)
+	UC_Error_u display_error=machine_error_hold.userErr_hold;
+
+#if !LED_FAULT_BAT_COM_EN
+	/* 参考程序没有此故障，禁止落入“其它故障11闪”；停机保护仍由原锁存门控。 */
+	display_error.bits.gBatComFault=0;
+#endif
+	if(display_error.word==0 && machine_error_hold.MC_error_hold.word==0)
 	{
 		user_led_control.LedDeal=0;
 		user_led_control.LedRunTimes=0;
@@ -83,15 +89,15 @@ uint8_t LedError_Control(void)
 		user_led_control.LedDeal=1;
 		user_led_control.LedRunTimes=10;
 		user_led_control.LedRunMode=1;
-		if(machine_error_hold.userErr_hold.bits.gIBusAcmpOCP)
+		if(display_error.bits.gIBusAcmpOCP)
 		{
 			user_led_control.LedRunCnt_Once=LED_FAULT_HW_OCP;
 		}
-		else if(machine_error_hold.userErr_hold.bits.gNtcBat)
+		else if(display_error.bits.gNtcBat)
 		{
 			user_led_control.LedRunCnt_Once=LED_FAULT_BAT_TEMP;
 		}
-		else if(machine_error_hold.userErr_hold.bits.gNtcMos || machine_error_hold.userErr_hold.bits.gMos_overload)
+		else if(display_error.bits.gNtcMos || display_error.bits.gMos_overload)
 		{
 			user_led_control.LedRunCnt_Once=LED_FAULT_MOS_TEMP;
 		}
@@ -99,28 +105,28 @@ uint8_t LedError_Control(void)
 		{
 			user_led_control.LedRunCnt_Once=LED_FAULT_BLOCK;
 		}
-		else if(machine_error_hold.userErr_hold.bits.gIBusPeakOCP1 ||
-		        machine_error_hold.userErr_hold.bits.gIBusAvgOCP1 ||
-		        machine_error_hold.userErr_hold.bits.gIBusAvgOCP2 ||
-		        machine_error_hold.userErr_hold.bits.gIBusAvgOCP3)
+		else if(display_error.bits.gIBusPeakOCP1 ||
+		        display_error.bits.gIBusAvgOCP1 ||
+		        display_error.bits.gIBusAvgOCP2 ||
+		        display_error.bits.gIBusAvgOCP3)
 		{
 			user_led_control.LedRunCnt_Once=LED_FAULT_IBUS_OCP1;
 		}
-		else if(machine_error_hold.userErr_hold.bits.gVBusStbUVP ||
-		        machine_error_hold.userErr_hold.bits.gVBusRunUVP1 ||
-		        machine_error_hold.userErr_hold.bits.gVBusRunUVP2)
+		else if(display_error.bits.gVBusStbUVP ||
+		        display_error.bits.gVBusRunUVP1 ||
+		        display_error.bits.gVBusRunUVP2)
 		{
 			user_led_control.LedRunCnt_Once=LED_FAULT_UVP;
 		}
-		else if(machine_error_hold.userErr_hold.bits.fly_machine)
+		else if(display_error.bits.fly_machine)
 		{
 			user_led_control.LedRunCnt_Once=LED_FAULT_FLY_MACHINE;
 		}
-		else if(machine_error_hold.userErr_hold.bits.gVBusOVP)
+		else if(display_error.bits.gVBusOVP)
 		{
 			user_led_control.LedRunCnt_Once=LED_FAULT_OVP;
 		}
-		else if(machine_error_hold.userErr_hold.bits.gMosBridgeH || machine_error_hold.userErr_hold.bits.gMosBridgeL)
+		else if(display_error.bits.gMosBridgeH || display_error.bits.gMosBridgeL)
 		{
 			user_led_control.LedRunCnt_Once=LED_FAULT_MOS_BRIDGE;
 		}

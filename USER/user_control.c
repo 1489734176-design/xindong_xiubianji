@@ -1668,6 +1668,34 @@ void pulse_th_handle(void)
 
 
 }
+/* 开机和运行降档共用同一张边界表，不能各自推算中点。 */
+static const u16 gear_down_adc[VSP_GEAR_COUNT-1u]=
+{
+	VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_2_TO_1_MV-VSP_GEAR_MARGIN_MV),
+	VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_3_TO_2_MV-VSP_GEAR_MARGIN_MV),
+	VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_4_TO_3_MV-VSP_GEAR_MARGIN_MV),
+	VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_5_TO_4_MV-VSP_GEAR_MARGIN_MV),
+	VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_6_TO_5_MV-VSP_GEAR_MARGIN_MV)
+};
+static u8 gear_pending=0;
+static u8 gear_pending_from=VSP_GEAR_COUNT;
+static u16 gear_confirm_count=0;
+
+/** @brief ADC稳定后初始化旋钮档位：从6档按减档边界向下判断，不继承Flash档位。 */
+void user_gears_init(unsigned int adc_value)
+{
+	u8 gear=VSP_GEAR_COUNT-1u;
+
+	while(gear>0 && adc_value<gear_down_adc[gear-1u])
+	{
+		gear--;
+	}
+	user_list.gears_level=gear;
+	gear_pending=gear;
+	gear_pending_from=VSP_GEAR_COUNT;
+	gear_confirm_count=0;
+}
+
 /**
  * @brief 六档旋钮判定，仅由1ms任务调用；每次确认后最多升/降一档。
  *        独立升降阈值加误差裕量，不再使用旧档位电压中点。
@@ -1675,7 +1703,7 @@ void pulse_th_handle(void)
  */
 void get_gear_from_adc(unsigned int adc_value)
 {
-	/* 两表均按面板1~6档的相邻边界排列：1↔2、2↔3、3↔4、4↔5、5↔6。 */
+	/* 升档表按面板1~6档的相邻边界排列，降档共用开机初始化的边界表。 */
 	static const u16 up_adc[VSP_GEAR_COUNT-1u]=
 	{
 		VSP_GEAR_MV_TO_ADC(VSP_GEAR_UP_1_TO_2_MV+VSP_GEAR_MARGIN_MV),
@@ -1684,57 +1712,46 @@ void get_gear_from_adc(unsigned int adc_value)
 		VSP_GEAR_MV_TO_ADC(VSP_GEAR_UP_4_TO_5_MV+VSP_GEAR_MARGIN_MV),
 		VSP_GEAR_MV_TO_ADC(VSP_GEAR_UP_5_TO_6_MV+VSP_GEAR_MARGIN_MV)
 	};
-	static const u16 down_adc[VSP_GEAR_COUNT-1u]=
-	{
-		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_2_TO_1_MV-VSP_GEAR_MARGIN_MV),
-		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_3_TO_2_MV-VSP_GEAR_MARGIN_MV),
-		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_4_TO_3_MV-VSP_GEAR_MARGIN_MV),
-		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_5_TO_4_MV-VSP_GEAR_MARGIN_MV),
-		VSP_GEAR_MV_TO_ADC(VSP_GEAR_DOWN_6_TO_5_MV-VSP_GEAR_MARGIN_MV)
-	};
-	static u8 pending_gear=0;
-	static u8 pending_from=VSP_GEAR_COUNT;
-	static u16 confirm_count=0;
 	u8 gear=user_list.gears_level;
 	u8 next_gear=gear;
 
 	if(gear>=VSP_GEAR_COUNT)
 	{
 		user_list.gears_level=0;
-		pending_from=VSP_GEAR_COUNT;
-		confirm_count=0;
+		gear_pending_from=VSP_GEAR_COUNT;
+		gear_confirm_count=0;
 		return;
 	}
 	if(gear<VSP_GEAR_COUNT-1u && adc_value>up_adc[gear])
 	{
 		next_gear=gear+1u;
 	}
-	else if(gear>0 && adc_value<down_adc[gear-1u])
+	else if(gear>0 && adc_value<gear_down_adc[gear-1u])
 	{
 		next_gear=gear-1u;
 	}
 
 	if(next_gear==gear)
 	{
-		pending_from=VSP_GEAR_COUNT;
-		confirm_count=0;
+		gear_pending_from=VSP_GEAR_COUNT;
+		gear_confirm_count=0;
 		return;
 	}
-	if(pending_from!=gear || pending_gear!=next_gear)
+	if(gear_pending_from!=gear || gear_pending!=next_gear)
 	{
-		pending_from=gear;
-		pending_gear=next_gear;
-		confirm_count=0;
+		gear_pending_from=gear;
+		gear_pending=next_gear;
+		gear_confirm_count=0;
 	}
-	if(confirm_count<VSP_GEAR_CONFIRM_MS)
+	if(gear_confirm_count<VSP_GEAR_CONFIRM_MS)
 	{
-		confirm_count++;
+		gear_confirm_count++;
 	}
-	if(confirm_count>=VSP_GEAR_CONFIRM_MS)
+	if(gear_confirm_count>=VSP_GEAR_CONFIRM_MS)
 	{
-		user_list.gears_level=pending_gear;
-		pending_from=VSP_GEAR_COUNT;
-		confirm_count=0;
+		user_list.gears_level=gear_pending;
+		gear_pending_from=VSP_GEAR_COUNT;
+		gear_confirm_count=0;
 	}
 }
 
