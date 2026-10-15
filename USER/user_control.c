@@ -1617,26 +1617,26 @@ void pwm_duty_aim_deal(void)
 	switch(user_list.gears_level)
 	{
 		case 0:
-			user_list.speed_ref_erpm=10000*2;
+			user_list.speed_ref_erpm=10200*2;
 			break;
 		case 1:
-			user_list.speed_ref_erpm=14000*2;
+			user_list.speed_ref_erpm=14300*2;
 			break;
 		case 2:
-			user_list.speed_ref_erpm=18000*2;
+			user_list.speed_ref_erpm=18300*2;
 			break;
 		case 3:
-			user_list.speed_ref_erpm=22000*2;
+			user_list.speed_ref_erpm=22400*2;
 			break;
 		case 4:
-			user_list.speed_ref_erpm=26000*2;
+			user_list.speed_ref_erpm=26500*2;
 			break;
 		case 5:
-			user_list.speed_ref_erpm=30000*2;
+			user_list.speed_ref_erpm=30500*2;
 			break;
 		default:
 			/* 非法档位按最低档目标处理，不能因越界意外给出满占空比。 */
-			user_list.speed_ref_erpm=10000*2;
+			user_list.speed_ref_erpm=10200*2;
 			break;
 	}
 	

@@ -345,7 +345,7 @@ void pwm_set(void)
 	 * 8A暂停加速并小步降PWM，回到7A以下才恢复，给10A保护点留出余量。
 	 * 在最低运行占空比仍超流时，由原保护停机，不能将软限制当硬保证。
 	 */
-	if(!motor_control_list.startup_complete && motor_control_list.u8Calibration_OK_flag)
+/*	if(!motor_control_list.startup_complete && motor_control_list.u8Calibration_OK_flag)
 	{
 		if(avg_current>=ROUTER_START_CURRENT_ADC)
 		{
@@ -369,7 +369,7 @@ void pwm_set(void)
 
 	if(limit_current_on || motor_control_list.startup_current_limited)
 	{
-		/* 冻结虚拟斜坡并跟回真实输出，防止限流期间把高目标积攒起来。 */
+		// 冻结虚拟斜坡并跟回真实输出，防止限流期间把高目标积攒起来
 		pwm_add_count=0;
 		pwm_sub_count=0;
 		if(motor_control_list.pwm_duty_virtual>mc_core_list.pwm_actual_runing_data)
@@ -377,7 +377,7 @@ void pwm_set(void)
 			motor_control_list.pwm_duty_virtual=mc_core_list.pwm_actual_runing_data;
 		}
 	}
-	else if(motor_control_list.pwm_duty_virtual<motor_control_list.pwm_duty_aim)
+	else */if(motor_control_list.pwm_duty_virtual<motor_control_list.pwm_duty_aim)
 	{
 		pwm_sub_count=0;
 		if(++pwm_add_count>=PWM_ADD_GAP)
@@ -1414,13 +1414,19 @@ int32_t MC_PI_Handler(PidPI_t *pi, int32_t errorBack)
 	return pi->rpmSetPwmDuty;
 }
 
-/** @brief 1ms前台调节，档位ADC及其占空比公式完全不在这里改变。 */
+/** @brief 1ms前台调节：参考软着陆、加速趋势阻尼和真实PWM跟踪，档位目标不变。 */
 void motor_speed_control_1ms(void)
 {
 	static u16 pi_count=0;
 	static u8 pi_ready=0;
 	static u32 ref_ramp=0;
+	static u32 speed_last=0;
+	static s32 speed_rise_q8=0;
 	u32 target_ref=user_list.speed_ref_erpm;
+	u32 ref_step;
+	u32 speed_lead;
+	s32 speed_delta;
+	s32 pwm_ceiling;
 
 	if(!user_list.flag.bits.gToolEn || motor_control_list.bldc_state!=MOTOR_RUN ||
 	   mc_core_list.bldc_bemf_detected!=1 || mc_core_list.time_count_60_degree==0 ||
@@ -1432,6 +1438,8 @@ void motor_speed_control_1ms(void)
 		pi_count=0;
 		pi_ready=0;
 		ref_ramp=0;
+		speed_last=0;
+		speed_rise_q8=0;
 		motor_control_list.time_count_60_degree_filter=0;
 		motor_control_list.time_count_60_degree_filter_q8=0;
 		motor_control_list.motor_speed=0;
@@ -1442,13 +1450,22 @@ void motor_speed_control_1ms(void)
 	Speed_Pid.Limit_max_data=motor_control_list.pwm_duty_virtual;
 	if(Speed_Pid.Limit_max_data>motor_control_list.pwm_duty_aim)
 	{
+		/* 降档不能因虚拟斜坡尚未降完，就把PI上限反而放开到满PWM。 */
+		Speed_Pid.Limit_max_data=motor_control_list.pwm_duty_aim;
+	}
+	if(Speed_Pid.Limit_max_data>LIMIT_MAX_PWN_DUTY)
+	{
 		Speed_Pid.Limit_max_data=LIMIT_MAX_PWN_DUTY;
 	}
-	if(motor_control_list.startup_current_limited &&
-	   Speed_Pid.Limit_max_data>mc_core_list.pwm_actual_runing_data)
+	/* 正常跟踪也要抗积分堆积；保留少量领先空间及Q15小数，不能每拍取整归零。 */
+	pwm_ceiling=(s32)mc_core_list.pwm_actual_runing_data+ROUTER_SPEED_PWM_LEAD_COUNTS;
+	if(motor_control_list.startup_current_limited)
 	{
-		/* 限流时PI上限跟随实际输出，禁止速度误差累积出一个待释放的大占空比。 */
-		Speed_Pid.Limit_max_data=mc_core_list.pwm_actual_runing_data;
+		pwm_ceiling=(s32)mc_core_list.pwm_actual_runing_data;
+	}
+	if(Speed_Pid.Limit_max_data>pwm_ceiling)
+	{
+		Speed_Pid.Limit_max_data=pwm_ceiling;
 	}
 	Speed_Pid.Limit_min_data=LIMIT_MIN_PWN_DUTY;
 	if(Speed_Pid.Limit_min_data>Speed_Pid.Limit_max_data)
@@ -1475,6 +1492,8 @@ void motor_speed_control_1ms(void)
 		{
 			ref_ramp=target_ref;
 		}
+		speed_last=motor_control_list.motor_speed;
+		speed_rise_q8=0;
 		pi_ready=1;
 	}
 	else if(ref_ramp>target_ref)
@@ -1483,9 +1502,19 @@ void motor_speed_control_1ms(void)
 	}
 	else if(ref_ramp<target_ref && !motor_control_list.startup_current_limited)
 	{
-		if(target_ref-ref_ramp>ROUTER_SPEED_REF_STEP_ERPM)
+		/* 远离目标仍按原斜率加速，接近终点逐渐收缓，避免参考斜率突然归零。 */
+		ref_step=(target_ref-ref_ramp)/ROUTER_SPEED_REF_TAPER_MS;
+		if(ref_step>ROUTER_SPEED_REF_STEP_ERPM)
 		{
-			ref_ramp+=ROUTER_SPEED_REF_STEP_ERPM;
+			ref_step=ROUTER_SPEED_REF_STEP_ERPM;
+		}
+		else if(ref_step==0)
+		{
+			ref_step=1;
+		}
+		if(target_ref-ref_ramp>ref_step)
+		{
+			ref_ramp+=ref_step;
 		}
 		else
 		{
@@ -1506,7 +1535,41 @@ void motor_speed_control_1ms(void)
 	if(++pi_count>=ROUTER_SPEED_PI_PERIOD_MS)
 	{
 		pi_count=0;
-		motor_control_list.pwm_duty_aim2=MC_PI_Handler(&Speed_Pid, motor_control_list.motor_speed);
+		/* 周期滤波有延迟：仍在明显加速时，用有限提前量抑制到速前继续加PWM。
+		 * 趋势再做1/4滤波并留半个速度死区，避免稳态量化抖动形成持续偏置。
+		 * 只修正PI反馈；motor_speed及电流/堵转/过流保护仍用原数据。
+		 */
+		speed_delta=(s32)motor_control_list.motor_speed-(s32)speed_last;
+		speed_last=motor_control_list.motor_speed;
+		if(speed_delta>ROUTER_SPEED_LEAD_MAX_ERPM)
+		{
+			speed_delta=ROUTER_SPEED_LEAD_MAX_ERPM;
+		}
+		else if(speed_delta< -ROUTER_SPEED_LEAD_MAX_ERPM)
+		{
+			speed_delta= -ROUTER_SPEED_LEAD_MAX_ERPM;
+		}
+		speed_rise_q8+=(speed_delta*256-speed_rise_q8)/4;
+		speed_lead=0;
+		if(speed_rise_q8>0)
+		{
+			speed_lead=((u32)speed_rise_q8*ROUTER_SPEED_LOOKAHEAD_MS)/
+				(ROUTER_SPEED_PI_PERIOD_MS*256u);
+			if(speed_lead>ROUTER_SPEED_DEADBAND_ERPM/2)
+			{
+				speed_lead-=ROUTER_SPEED_DEADBAND_ERPM/2;
+			}
+			else
+			{
+				speed_lead=0;
+			}
+			if(speed_lead>ROUTER_SPEED_LEAD_MAX_ERPM)
+			{
+				speed_lead=ROUTER_SPEED_LEAD_MAX_ERPM;
+			}
+		}
+		motor_control_list.pwm_duty_aim2=MC_PI_Handler(&Speed_Pid,
+			(s32)motor_control_list.motor_speed+(s32)speed_lead);
 	}
 }
 

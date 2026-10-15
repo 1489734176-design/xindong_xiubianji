@@ -72,7 +72,11 @@
 #define ROUTER_SPEED_DEADBAND_ERPM     (120)   // 上限附近约0.2%误差不来回追调
 #define ROUTER_SPEED_PI_STEP_UP        (4)     // 每次PI最多增加4个CCR计数
 #define ROUTER_SPEED_PI_STEP_DOWN      (4)     // 正常限速每次最多减少4个CCR，保护不受此限制
-#define ROUTER_SPEED_REF_STEP_ERPM     (40u)   // 闭环参考每1ms最多升40eRPM，约1.5s到60000
+#define ROUTER_SPEED_REF_STEP_ERPM     (40u)   // 闭环参考每1ms最多升40eRPM
+#define ROUTER_SPEED_REF_TAPER_MS      (32u)   // 剩余目标/32作步长，最后1280eRPM逐渐收缓
+#define ROUTER_SPEED_LOOKAHEAD_MS      (40u)   // 按滤波后的加速趋势提前收PWM，稳态时提前量回零
+#define ROUTER_SPEED_LEAD_MAX_ERPM     (2000)  // 趋势提前量限幅，不改变实际测速及保护数据
+#define ROUTER_SPEED_PWM_LEAD_COUNTS   (8)     // PI最多领先真实PWM 8个CCR，避免执行滞后时积攒输出
 
 
 
@@ -192,25 +196,25 @@
 #define IBus_Avg_REC_MS               (200) //ms
 #define IBus_Avg_REC_MS_CONUT         (u16)((float)IBus_Avg_REC_MS*SLOWLOOP_FRE/1000.0f) 
 
-#define IBus_Avg_OCP1                              (55.0f) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP1                              (45.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP1_AdcValue         (u16)(IBus_Avg_OCP1*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP1_MS               (2000) //ms
 #define IBus_Avg_OCP1_MS_CONUT         (u16)((float)IBus_Avg_OCP1_MS*SLOWLOOP_FRE/1000.0f) 
 	
-#define IBus_Avg_OCP2                              (60.0f) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP2                              (55.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_AdcValue         (u16)(IBus_Avg_OCP2*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP2_MS                           (300) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_MS_CONUT        (u16)((float)IBus_Avg_OCP2_MS*SLOWLOOP_FRE/1000.0f) 
 
-#define IBus_Avg_OCP3                              (70.0f) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP3                              (65.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP3_AdcValue         (u16)(IBus_Avg_OCP3*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP3_MS                           (20) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP3_MS_CONUT        (u16)((float)IBus_Avg_OCP3_MS*SLOWLOOP_FRE/1000.0f)
 
-#define IBus_Avg_OCP4                              (90.0f) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP4                              (75.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP4_AdcValue         (u16)(IBus_Avg_OCP4*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP4_MS               (5) //ms
@@ -229,21 +233,21 @@
 //此处堵转时间注意根据实际情况调整
 #define Block_Protect_RUNING_TIME                     (100*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 
-#define Block_Protect_Current1                      (45.00)/*unit:a*/
+#define Block_Protect_Current1                      (65.00)/*unit:a*/
 #define Block_Protect_Current1_AdcValue             (u16)(Block_Protect_Current1*CURRENT_ADC_PER_A)
 #define Block_Protect_Current1_TIME                 (80*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 
 
-#define Block_Protect_Current2                      (55.00)/*unit:a*/
+#define Block_Protect_Current2                      (75.00)/*unit:a*/
 #define Block_Protect_Current2_AdcValue             (u16)(Block_Protect_Current2*CURRENT_ADC_PER_A)
 #define Block_Protect_Current2_TIME                 (50*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 
 
-#define Block_Protect_Current3                      (60.00)/*unit:a*/
+#define Block_Protect_Current3                      (85.00)/*unit:a*/
 #define Block_Protect_Current3_AdcValue             (u16)(Block_Protect_Current3*CURRENT_ADC_PER_A)
 #define Block_Protect_Current3_TIME                 (30*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 
-#define Block_Protect_Current4                      (70.00)/*unit:a*/
+#define Block_Protect_Current4                      (95.00)/*unit:a*/
 #define Block_Protect_Current4_AdcValue             (u16)(Block_Protect_Current4*CURRENT_ADC_PER_A)
 #define Block_Protect_Current4_TIME                 (20*SLOWLOOP_1ms_CNT_LOAD)/*堵转时间unit:ms*/
 
