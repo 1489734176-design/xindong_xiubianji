@@ -201,13 +201,13 @@
 #define IBus_Avg_OCP1                              (45.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP1_AdcValue         (u16)(IBus_Avg_OCP1*CURRENT_ADC_PER_A)
 
-#define IBus_Avg_OCP1_MS               (3000) //ms
+#define IBus_Avg_OCP1_MS               (2000) //ms
 #define IBus_Avg_OCP1_MS_CONUT         (u16)((float)IBus_Avg_OCP1_MS*SLOWLOOP_FRE/1000.0f) 
 	
-#define IBus_Avg_OCP2                              (55.0f) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP2                              (50.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_AdcValue         (u16)(IBus_Avg_OCP2*CURRENT_ADC_PER_A)
 
-#define IBus_Avg_OCP2_MS                           (500) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP2_MS                           (200) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_MS_CONUT        (u16)((float)IBus_Avg_OCP2_MS*SLOWLOOP_FRE/1000.0f) 
 
 #define IBus_Avg_OCP3                              (65.0f) // 继承旧 V366 产品参数
@@ -372,7 +372,7 @@
 #define VBus_Run_UVP2_FiltMS_COUNT                              (u16)((float)VBus_Run_UVP2_FiltMS*SLOWLOOP_FRE/1000.0f)
 
     
-#define VBus_OVP_V                                 (24.00f) // 继承旧 V366 产品参数
+#define VBus_OVP_V                                 (23.00f) // 继承旧 V366 产品参数
 #define VBus_OVP_ADC     		       	                             (u16)(VBus_OVP_V * ADC_REF_VALUE / VBUS_SHUNT_RATIO / ADC_REFV)
 #define VBus_OVP_FiltMS                            (100) // 继承旧 V366 产品参数
 #define VBus_OVP_FiltMS_COUNT                                   (u16)((float)VBus_OVP_FiltMS*SLOWLOOP_FRE/1000.0f)
