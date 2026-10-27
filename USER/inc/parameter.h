@@ -198,25 +198,25 @@
 #define IBus_Avg_REC_MS               (200) //ms
 #define IBus_Avg_REC_MS_CONUT         (u16)((float)IBus_Avg_REC_MS*SLOWLOOP_FRE/1000.0f) 
 
-#define IBus_Avg_OCP1                              (45.0f) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP1                              (50.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP1_AdcValue         (u16)(IBus_Avg_OCP1*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP1_MS               (2000) //ms
 #define IBus_Avg_OCP1_MS_CONUT         (u16)((float)IBus_Avg_OCP1_MS*SLOWLOOP_FRE/1000.0f) 
 	
-#define IBus_Avg_OCP2                              (50.0f) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP2                              (60.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_AdcValue         (u16)(IBus_Avg_OCP2*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP2_MS                           (200) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP2_MS_CONUT        (u16)((float)IBus_Avg_OCP2_MS*SLOWLOOP_FRE/1000.0f) 
 
-#define IBus_Avg_OCP3                              (65.0f) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP3                              (70.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP3_AdcValue         (u16)(IBus_Avg_OCP3*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP3_MS                           (20) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP3_MS_CONUT        (u16)((float)IBus_Avg_OCP3_MS*SLOWLOOP_FRE/1000.0f)
 
-#define IBus_Avg_OCP4                              (75.0f) // 继承旧 V366 产品参数
+#define IBus_Avg_OCP4                              (80.0f) // 继承旧 V366 产品参数
 #define IBus_Avg_OCP4_AdcValue         (u16)(IBus_Avg_OCP4*CURRENT_ADC_PER_A)
 
 #define IBus_Avg_OCP4_MS               (5) //ms
